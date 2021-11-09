@@ -49,11 +49,16 @@ void do_send(osjob_t* j);
 //------------------------------------Sensor Variables-----------------------------------------
 // do change these values if you don't need all of them
 float currentDecibels = NULL;
+float coeff0 = 2785.7384386736867;//83.2073;
+float coeff1 = 58.66759823916591;//11.003;
 float prevDecibels = NULL;
 int SOUND_SENSOR_PIN = 36;
 const char* deviceNo = "vog-02"; // type your device ID
 unsigned int sample;
 const int sampleWindow = 50; // Sample window width in mS (50 mS = 20Hz)
+
+int adc;
+int dB, PdB; //the variable that will hold the value read from the microphone each time
 
 //------------------------------------Stadtpuls Logo--------------------------------------------
 // pls do not change
@@ -310,27 +315,31 @@ void do_send(osjob_t* j){
 
 
 void updateValues() {
-  unsigned long startMillis = millis();                   // Start of sample window
-  float peakToPeak = 0;                                   // peak-to-peak level
+    PdB = dB; //Store the previous of dB here
+    adc= analogRead(SOUND_SENSOR_PIN); //Read the ADC value from amplifer
+//Serial.println (adc);//Print ADC for initial calculation
+  currentDecibels = (adc+coeff0) / coeff1; //Convert ADC value to dB using Regression values
+  // unsigned long startMillis = millis();                   // Start of sample window
+  // float peakToPeak = 0;                                   // peak-to-peak level
 
-  unsigned int signalMax = 0;                             //minimum value
-  unsigned int signalMin = 4095;                          //maximum value
-                                                          // collect data for 50 mS
-  while (millis() - startMillis < sampleWindow) {
-    sample = analogRead(SOUND_SENSOR_PIN);                //get reading from microphone
+  // unsigned int signalMax = 0;                             //minimum value
+  // unsigned int signalMin = 4095;                          //maximum value
+  //                                                         // collect data for 50 mS
+  // while (millis() - startMillis < sampleWindow) {
+  //   sample = analogRead(SOUND_SENSOR_PIN);                //get reading from microphone
 
-    if (sample < 4095) {                                  // toss out spurious readings
-         if (sample > signalMax) {
-            signalMax = sample;                           // save just the max levels
-         }
-         else if (sample < signalMin) {
-            signalMin = sample;                           // save just the min levels
-         }
-      }
-  }
+  //   if (sample < 4095) {                                  // toss out spurious readings
+  //        if (sample > signalMax) {
+  //           signalMax = sample;                           // save just the max levels
+  //        }
+  //        else if (sample < signalMin) {
+  //           signalMin = sample;                           // save just the min levels
+  //        }
+  //     }
+  // }
 
-  peakToPeak = signalMax - signalMin;                     // max - min = peak-peak amplitude
-  currentDecibels = map(peakToPeak, 20, 900, 42, 90);
+  // peakToPeak = signalMax - signalMin;                     // max - min = peak-peak amplitude
+  // currentDecibels = map(peakToPeak, 20, 900, 42, 90);
 
   Serial.println(currentDecibels);
 
@@ -427,5 +436,5 @@ void setup() {
 void loop() {
     updateValues();
     // os_runloop_once(); // TTN
-//    drawScreen();
+   drawScreen();
 }

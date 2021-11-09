@@ -1,0 +1,1 @@
+Use this sketch on your board to collect ADC values for the data mangling
