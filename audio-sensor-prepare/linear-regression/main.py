@@ -33,7 +33,8 @@ def plot_regression_line(x, y, b):
 
     # plotting the regression line
     plt.plot(x, y_pred, color="g")
-
+    plt.axvline(75, color='k', linestyle='dashed', linewidth=1)
+    plt.axhline(1380, color='k', linestyle='dashed', linewidth=1)
     # putting labels
     plt.xlabel('dB')
     plt.ylabel('ADC')
