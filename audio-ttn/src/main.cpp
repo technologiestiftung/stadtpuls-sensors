@@ -42,12 +42,29 @@
 // our secrets
 #include "env.h"
 
-int SOUND_SENSOR_PIN = 36;
-// const int sampleWindow = 50; // Sample window width in mS (50 mS = 20Hz)
-double currentSample = 0;
-unsigned int sampleCount = 0;
-unsigned int PERIOD = 1000;
-unsigned long now = 0;
+int sendingPeriod = 10 * 1000;
+int sendingIteration = 0;
+int measuringPeriod = 100;
+int measuringIteration = 0;
+unsigned long time_now = 0;
+
+int baseADCVal = 1250;
+int valTwoIterationsAgo = 0;
+int valPrevIteration = 0;
+int valCurrentIteration = 0;
+int sumAllHighPeakValues = 0;
+int totalHighPeaksCount = 0;
+int sumAllLowPeakValues = 0;
+int totalLowPeaksCount = 0;
+int maxPeak = 0;
+int minPeak = 0;
+float averageHighPeaks = 0;
+float averageLowPeaks = 0;
+float totalAverage = 0;
+String requestString = "";
+
+int SENSOR_PIN = 36;
+
 void do_send(osjob_t *j);
 
 // These callbacks are only used in over-the-air activation, so they are
@@ -69,10 +86,10 @@ const unsigned TX_INTERVAL = 60 * 5; // 5 minutes
 // PIN MAPPING FOR HELTEC ESP32 V2 --> do not change
 //
 const lmic_pinmap lmic_pins = {
-    .nss = 18,
-    .rxtx = LMIC_UNUSED_PIN,
-    .rst = 14, // reset pin
-    .dio = {26, 34, 35},
+  .nss = 18,
+  .rxtx = LMIC_UNUSED_PIN,
+  .rst = 14, // reset pin
+  .dio = {26, 34, 35},
 };
 
 //
@@ -89,7 +106,6 @@ void printHex2(unsigned v) {
 // Messages can be checked withing your serial monitor. Do not
 // change!
 //
-
 void onEvent(ev_t ev) {
   Serial.print(os_getTime());
   Serial.print(": ");
@@ -187,20 +203,16 @@ void onEvent(ev_t ev) {
 // Bytes in Payload depend on (your) measurements -> change if
 // needed
 //
-
 void generate_payload() {
-  // unsigned float sampleCount = ((TX_INTERVAL * 1000) / PERIOD);
-  double median = 0;
-  if (currentSample > 0) {
-    median = currentSample / sampleCount;
-  }
-  currentSample = 0;
-  Serial.print("median: ");
-  Serial.println(median);
-  int currentSampleTimesHundred = median * 100;
-
-  tx_payload[0] = (int)currentSampleTimesHundred >> 8;
-  tx_payload[1] = (int)currentSampleTimesHundred;
+  
+  tx_payload[0] = (int)(averageHighPeaks - baseADCVal) >> 8;
+  tx_payload[1] = (int)(averageHighPeaks - baseADCVal);
+  tx_payload[2] = (int)(maxPeak - baseADCVal) >> 8;
+  tx_payload[3] = (int)(maxPeak - baseADCVal);
+  tx_payload[4] = (int)(minPeak - baseADCVal) >> 8;
+  tx_payload[5] = (int)(minPeak - baseADCVal);
+  tx_payload[6] = (int)(averageLowPeaks - baseADCVal) >> 8;
+  tx_payload[7] = (int)(averageLowPeaks - baseADCVal);
 }
 
 //
@@ -208,7 +220,6 @@ void generate_payload() {
 // Values which will be uploaded depend on (your) measurements
 // --> change
 //
-
 void do_send(osjob_t *j) {
   // Check if there is not a current TX/RX job running
   if (LMIC.opmode & OP_TXRXPEND) {
@@ -230,50 +241,6 @@ void do_send(osjob_t *j) {
     Serial.println(F("Packet queued"));
   }
   // Next TX is scheduled after TX_COMPLETE event.
-}
-
-void updateValues() {
-  // unsigned long startMillis = millis(); // Start of sample window
-  // double peakToPeak = 0;                // peak-to-peak level
-  unsigned int sample = analogRead(SOUND_SENSOR_PIN);
-  // unsigned int signalMax = 0;    // minimum value
-  // unsigned int signalMin = 4095; // maximum value
-  // collect data for
-  // 50 mS
-  // int count = 0;
-  // unsigned int sample = 0;
-  // while (millis() - startMillis < sampleWindow) {
-  //   sample = analogRead(SOUND_SENSOR_PIN); // get reading from microphone
-
-  //   // toss out spurious readings
-  if (sample < 4095) {
-    sampleCount++;
-    currentSample += sample;
-  }
-  //     count++;
-  //     currentSample += sample;
-  //     if (sample > signalMax) {
-  //       // save just the max levels
-  //       signalMax = sample;
-  //     } else if (sample < signalMin) {
-  //       // save just the min levels
-  //       signalMin = sample;
-  //     }
-  //     Serial.print("sample: ");
-  //     Serial.println(sample);
-  //     Serial.print("currentSample: ");
-  //     Serial.println(currentSample / count);
-  //   }
-  // }
-
-  // max - min = peak-peak sample
-  // peakToPeak = signalMax - signalMin;
-  // currentSample = signalMin + peakToPeak / 2;
-  // currentSample = peakToPeak;
-  // Serial.println("--------------------------");
-  // Serial.print("currentSample: ");
-  // Serial.println(currentSample);
-  // Serial.println("--------------------------");
 }
 
 void setup() {
@@ -373,12 +340,90 @@ void setup() {
   do_send(&sendjob);
 }
 
-void loop() {
+void updateValues()
+{
+  valCurrentIteration = analogRead(SENSOR_PIN);
 
-  if (millis() >= now + PERIOD) {
-    now += PERIOD;
-    updateValues();
+  if (minPeak == 0)
+  {
+    minPeak = valCurrentIteration;
+  }
+  if (maxPeak == 0)
+  {
+    maxPeak = valCurrentIteration;
+  }
+  if (valCurrentIteration > maxPeak)
+  {
+    maxPeak = valCurrentIteration;
+  }
+  if (valCurrentIteration < minPeak)
+  {
+    minPeak = valCurrentIteration;
+  }
+  if (valPrevIteration > valTwoIterationsAgo && valPrevIteration > valCurrentIteration)
+  {
+    sumAllHighPeakValues += valPrevIteration;
+    totalHighPeaksCount += 1;
+  }
+  if (valPrevIteration < valTwoIterationsAgo && valPrevIteration < valCurrentIteration)
+  {
+    sumAllLowPeakValues += valPrevIteration;
+    totalLowPeaksCount += 1;
   }
 
-  os_runloop_once(); // TTN
+  valTwoIterationsAgo = valPrevIteration;
+  valPrevIteration = valCurrentIteration;
+}
+
+void updateAverages()
+{
+  if (totalHighPeaksCount > 0)
+  {
+    averageHighPeaks = sumAllHighPeakValues / totalHighPeaksCount;
+  }
+  if (totalLowPeaksCount > 0)
+  {
+    averageLowPeaks = sumAllLowPeakValues / totalLowPeaksCount;
+  }
+  if (totalHighPeaksCount > 0 && totalLowPeaksCount > 0)
+  {
+    totalAverage = averageLowPeaks + ((averageHighPeaks - averageLowPeaks) / 2);
+  }
+}
+
+void resetValues()
+{
+  sumAllHighPeakValues = 0;
+  totalHighPeaksCount = 0;
+  sumAllLowPeakValues = 0;
+  totalLowPeaksCount = 0;
+  maxPeak = 0;
+  minPeak = 0;
+  averageHighPeaks = 0;
+  averageLowPeaks = 0;
+}
+
+void loop()
+{
+  if (millis() >= sendingIteration * sendingPeriod)
+  {
+    Serial.println("\n–––––––––––––––––––––––––––––––");
+    Serial.println(String("Sending Iteration: " + String(sendingIteration)));
+    Serial.println("- - - - - - - - - - - - - - - -\n");
+
+    updateAverages();
+    sendingIteration += 1;
+
+    if (sendingIteration > 1)
+    {
+      os_runloop_once(); // TTN
+      resetValues();
+    }
+  }
+
+  if (millis() >= measuringIteration * measuringPeriod)
+  {
+    updateValues();
+    measuringIteration += 1;
+  }
 }
