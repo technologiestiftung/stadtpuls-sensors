@@ -1,20 +1,38 @@
-// rename this file to env.h and fill in the values
-// const char *deviceNo = "xxxxx"; // type your device ID
-
 //--------------------------------------------------------------------------------------------
-//                TTN Credentials --> get them from your TTN application console
+//                HTTP Credentials --> Create a token and sensor in stadtpuls
 //--------------------------------------------------------------------------------------------
-// LoRaWAN NwkSKey, network session key – should be in big-endian (aka msb).
-static const PROGMEM u1_t NWKSKEY[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                         0x00, 0x00, 0x00, 0x00};
+int SENSOR_PIN = 1;
 
-// LoRaWAN AppSKey, application session key – should also be in big-endian (aka
-// msb).
-static const u1_t PROGMEM APPSKEY[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                         0x00, 0x00, 0x00, 0x00};
-// LoRaWAN end-device address (DevAddr) – hould be in big-endian (aka msb) too
-// See http://thethingsnetwork.org/wiki/AddressSpace
-static const u4_t DEVADDR =
-    0x12345678; // <-- Change this address for every node!
+const char *ssid0 = "SSID_NAME_1";
+const char *pass0 = "PASSWORD_1";
+
+const char *ssid0 = "SSID_NAME_2";
+const char *pass0 = "PASSWORD_2";
+
+const char *server = "api.stadtpuls.com";
+const char *path = "/api/v3/sensors/ID_HERE/records";
+const char *authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6wefefwef.eyJzdWIiOiIyYmMzZTI2Zi0wZGZlLTQxMDAtOGRmYy1lMmEwYTBkODljNTAiLCJzY29wZSI6InN1ZG8iLCJkZXNjcmlwdGlvbiI6IlNlbnNvcnMgLSBXcmFuZ2Vsa2lleiBTb3VuZHMgLSBTdG9yeSIsImp0aSI6IjE3MTE5NGI0LWI2YTgtNGEyZi05ZTcwLTE0ZDdkZmVjNTRmMiIsImlzcyI6InN0YWR0cHVscy5jb20iLCJpwefwfwefewfwef23r._0PwzwMEQPGWDfK7-w43t2f3r233r";
+const char *root_ca =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "9pbDH55GEgF+WjBTXTQcFeIS8vGLlfCU+K3jkw==\n"
+    "-----END CERTIFICATE-----\n";
