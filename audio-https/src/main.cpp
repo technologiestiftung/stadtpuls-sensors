@@ -8,9 +8,9 @@ WiFiMulti wifiMulti;
 
 #define WiFi_timeout 10000
 
-int sendingPeriod = 10 * 1000;
+int sendingPeriod = 60 * 1000;
 int sendingIteration = 0;
-int measuringPeriod = 100;
+int measuringPeriod = 1000;
 int measuringIteration = 0;
 unsigned long time_now = 0;
 
