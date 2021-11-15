@@ -42,12 +42,10 @@
 // our secrets
 #include "env.h"
 
-int sendingIteration = 0;
 int measuringPeriod = 100;
 int measuringIteration = 0;
 unsigned long time_now = 0;
 
-int baseADCVal = 1250;
 int valTwoIterationsAgo = 0;
 int valPrevIteration = 0;
 int valCurrentIteration = 0;
@@ -267,14 +265,24 @@ void onEvent(ev_t ev) {
 // needed
 //
 void generate_payload() {
-  tx_payload[0] = (int)(averageHighPeaks - baseADCVal) >> 8;
-  tx_payload[1] = (int)(averageHighPeaks - baseADCVal);
-  tx_payload[2] = (int)(maxPeak - baseADCVal) >> 8;
-  tx_payload[3] = (int)(maxPeak - baseADCVal);
-  tx_payload[4] = (int)(minPeak - baseADCVal) >> 8;
-  tx_payload[5] = (int)(minPeak - baseADCVal);
-  tx_payload[6] = (int)(averageLowPeaks - baseADCVal) >> 8;
-  tx_payload[7] = (int)(averageLowPeaks - baseADCVal);
+  int high = (int)(averageHighPeaks);
+  Serial.println("Average High Peaks: " + String(high));
+  int max = (int)(maxPeak);
+  Serial.println("Highest Peak: " + String(max));
+  int min = (int)(minPeak);
+  Serial.println("Lowest Peak: " + String(min));
+  int low = (int)(averageLowPeaks);
+  Serial.println("Average Low Peaks: " + String(low));
+  Serial.println("\n- - - - - - - - - - - - - - - -\n");
+
+  tx_payload[0] = high >> 8;
+  tx_payload[1] = high;
+  tx_payload[2] = max >> 8;
+  tx_payload[3] = max;
+  tx_payload[4] = min >> 8;
+  tx_payload[5] = min;
+  tx_payload[6] = low >> 8;
+  tx_payload[7] = low;
 }
 
 //
@@ -289,7 +297,7 @@ void do_send(osjob_t *j) {
   } else {
 
     Serial.println("\n–––––––––––––––––––––––––––––––");
-    Serial.println(String("Sending Iteration: " + String(sendingIteration)));
+    Serial.println("Sending playload now");
     Serial.println("- - - - - - - - - - - - - - - -\n");
 
     updateAverages();
