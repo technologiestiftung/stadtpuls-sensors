@@ -10,11 +10,10 @@ WiFiMulti wifiMulti;
 
 int sendingPeriod = 60 * 1000;
 int sendingIteration = 0;
-int measuringPeriod = 1000;
+int measuringPeriod = 100;
 int measuringIteration = 0;
 unsigned long time_now = 0;
 
-int baseADCVal = 1250;
 int valTwoIterationsAgo = 0;
 int valPrevIteration = 0;
 int valCurrentIteration = 0;
@@ -32,7 +31,7 @@ String requestString = "";
 void connectToWifi()
 {
   wifiMulti.addAP(ssid0, pass0);
-  wifiMulti.addAP(ssid1, pass1);
+  // wifiMulti.addAP(ssid1, pass1);
 
   Serial.println("Connecting Wifi...");
 
@@ -162,7 +161,7 @@ void resetValues()
 
 void updateRequestValue()
 {
-  requestString = "{\"measurements\":[" + String(averageHighPeaks - baseADCVal) + "," + String(maxPeak - baseADCVal) + "," + String(minPeak - baseADCVal) + "," + String(totalAverage - baseADCVal) + "," + String(averageLowPeaks - baseADCVal) + "]}";
+  requestString = "{\"measurements\":[" + String(averageHighPeaks) + "," + String(maxPeak) + "," + String(minPeak) + "," + String(totalAverage) + "," + String(averageLowPeaks) + "]}";
   Serial.println(requestString);
 }
 
