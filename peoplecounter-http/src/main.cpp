@@ -9,6 +9,9 @@ const int echoIN = 13;
 const int trigOUT = 32;
 const int echoOUT = 33;
 
+const int button=2;
+int buttonStatus=0;
+
 //define sound speed in cm/uS
 #define SOUND_SPEED 0.034
 
@@ -64,6 +67,7 @@ void setup() {
   Heltec.display->flipScreenVertically();
 
   //Serial.begin(115200); // Starts the serial communication
+  pinMode(button, INPUT); 
   pinMode(trigIN, OUTPUT); 
   pinMode(echoIN, INPUT); 
   pinMode(trigOUT, OUTPUT); 
@@ -76,6 +80,12 @@ void setup() {
 }
 
 void loop() {
+  buttonStatus = digitalRead(button); 
+  if (buttonStatus == HIGH){
+    currentPeople = 0;
+  }
+  else{}
+
   int distanceIN = distanz(trigIN, echoIN);
   Serial.print("Distance IN (cm): ");
   Serial.println(distanceIN);
