@@ -1,5 +1,20 @@
 #include <Arduino.h> 
+#include <WiFi.h>
+#include <WiFiMulti.h>
+#include <HTTPClient.h>
+#include <WiFiClientSecure.h>
+#include <env.h>
 #include <heltec.h> // Library for OLED and Board
+
+WiFiMulti wifiMulti;
+#define WiFi_timeout 10000
+
+int sendingPeriod = 60 * 1000;
+int sendingIteration = 0;
+int measuringPeriod = 100;
+int measuringIteration = 0;
+unsigned long time_now = 0;
+String requestString = "";
 
 //Sensor IN
 const int trigIN = 12;
@@ -9,6 +24,7 @@ const int echoIN = 13;
 const int trigOUT = 32;
 const int echoOUT = 33;
 
+//button
 const int button=2;
 int buttonStatus=0;
 
@@ -30,6 +46,7 @@ void displayMeasurement() {
   Heltec.display->setFont(ArialMT_Plain_16);  Heltec.display->drawString(0,32,String(currentPeople));
 }
 
+//sensor function
 int distanz(int trig, int echo) {
     digitalWrite(trig, LOW);
     delayMicroseconds(2);
@@ -43,6 +60,81 @@ int distanz(int trig, int echo) {
     distanceCm = duration * SOUND_SPEED/2;
     
     return distanceCm;
+}
+
+//WiFi function
+void connectToWifi()
+{
+  wifiMulti.addAP(ssid0, pass0);
+  // wifiMulti.addAP(ssid1, pass1);
+
+  Serial.println("Connecting to Wifi...");
+
+  if (wifiMulti.run(WiFi_timeout) == WL_CONNECTED)
+  {
+    Serial.println("\n–––––––––––––––––––––––––––––––");
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+  }
+  else
+  {
+    Serial.println("\n–––––––––––––––––––––––––––––––");
+    Serial.println("WiFi not Connected");
+  }
+}
+
+void sendValuesToStadtpuls()
+{
+  WiFiClientSecure client;
+
+  client.setCACert(root_ca);
+
+  if (!client.connect(server, 443))
+  {
+    Serial.println("Connection failed!");
+  }
+  else
+  {
+    Serial.println("Connected to server!");
+    Serial.println("\n- - - - - - - - - - - - - - - -");
+    // Make a HTTP request:
+    client.println("POST " + String(path) + " HTTP/1.0");
+    client.println("Host: api.stadtpuls.com");
+    client.println("Content-Type: application/json");
+    client.println("Content-Length: " + String(requestString.length()));
+    client.println("Authorization: Bearer " + String(authToken));
+    client.println("Connection: close");
+    client.println();
+    client.println(requestString);
+
+    while (client.connected())
+    {
+      String line = client.readStringUntil('\n');
+      if (line == "\r")
+      {
+        Serial.println("POST Success!");
+        break;
+      }
+    }
+    // if there are incoming bytes available
+    // from the server, read them and print them:
+    while (client.available())
+    {
+      char c = client.read();
+      Serial.write(c);
+    }
+
+    Serial.println("\n- - - - - - - - - - - - - - - -");
+
+    client.stop();
+  }
+}
+
+void updateRequestValue()
+{
+  requestString = "{\"measurements\":[" + String(currentPeople) + "]}";
+  Serial.println(requestString);
 }
 
 /*
@@ -62,6 +154,9 @@ int distanzMittel(int trig, int echo) {
 */
 
 void setup() {
+
+  connectToWifi();
+
   // display stuff
   Heltec.begin(true /*DisplayEnable Enable*/, false /*LoRa Disable*/, true /*Serial Enable*/);
   Heltec.display->flipScreenVertically();
@@ -123,7 +218,6 @@ void loop() {
   else{
     timeoutCounter=0;
   }
-
   // clear the display
   Heltec.display->clear();
   Heltec.display->setFont(ArialMT_Plain_10);
@@ -135,6 +229,28 @@ void loop() {
 
   Serial.print("Anzahl Personen: ");
   Serial.println(currentPeople); 
+
+   if (millis() >= sendingIteration * sendingPeriod)
+  {
+    Serial.println("\n–––––––––––––––––––––––––––––––");
+    Serial.println(String("Sending Iteration: " + String(sendingIteration)));
+    Serial.println("- - - - - - - - - - - - - - - -\n");
+
+    updateRequestValue();
+    sendingIteration += 1;
+
+    if (wifiMulti.run() == WL_CONNECTED)
+    {
+      if (sendingIteration > 1)
+      {
+        sendValuesToStadtpuls();
+      }
+    }
+    else
+    {
+      connectToWifi();
+    }
+  }
 
   delay(50);
 }
