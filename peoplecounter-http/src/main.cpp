@@ -54,9 +54,8 @@ int distanz(int trig, int echo) {
     digitalWrite(trig, HIGH);
     delayMicroseconds(10);
     digitalWrite(trig, LOW);
-  
     // Reads echoPin, returns the sound wave travel time (to object AND back) in microseconds
-    duration = pulseIn(echo, HIGH);
+    duration = pulseIn(echo, HIGH, 100000);
     distanceCm = duration * SOUND_SPEED/2;
     
     return distanceCm;
@@ -170,8 +169,13 @@ void setup() {
   delay(500);
   // this is my Eingangsbereich
   sensorINdistance = distanz(trigIN, echoIN);
+  delay(100);
   sensorOUTdistance = distanz(trigOUT, echoOUT);
 
+  Serial.print("initial IN: ");
+  Serial.println(sensorINdistance); 
+  Serial.print("initial OUT: ");
+  Serial.println(sensorOUTdistance); 
 }
 
 void loop() {
@@ -182,18 +186,14 @@ void loop() {
   else{}
 
   int distanceIN = distanz(trigIN, echoIN);
-  Serial.print("Distance IN (cm): ");
-  Serial.println(distanceIN);
-
+  delay(80); //avoid sonic interference!
   int distanceOUT = distanz(trigOUT, echoOUT);
-  Serial.print("Distance OUT (cm): ");
-  Serial.println(distanceOUT);
 
-  if(distanceIN < 10 && sequence.charAt(0) != '1'){
-  sequence += "1";
+  if(distanceIN < sensorINdistance - 10 && sequence.charAt(0) != '1'){
+    sequence += "1";
   }
-  else if(distanceOUT < 10 && sequence.charAt(0) != '2'){
-  sequence += "2";
+  else if(distanceOUT < sensorOUTdistance - 10 && sequence.charAt(0) != '2'){
+    sequence += "2";
   }
 
   if(sequence.equals("12")){
@@ -202,9 +202,9 @@ void loop() {
     delay(550);
   }
   else if(sequence.equals("21") && currentPeople > 0){
-  currentPeople--;  
-  sequence="";
-  delay(550);
+    currentPeople--;  
+    sequence="";
+    delay(550);
   }
 
   //Resets the sequence if it is invalid or timeouts
@@ -230,6 +230,13 @@ void loop() {
   Serial.print("Anzahl Personen: ");
   Serial.println(currentPeople); 
 
+   // Serial.print("Anzahl Personen: ");
+  Serial.print("IN dist: ");
+  Serial.println(distanceIN); 
+
+  Serial.print("OUT dist: ");
+  Serial.println(distanceOUT); 
+
    if (millis() >= sendingIteration * sendingPeriod)
   {
     Serial.println("\n–––––––––––––––––––––––––––––––");
@@ -251,6 +258,4 @@ void loop() {
       connectToWifi();
     }
   }
-
-  delay(50);
 }
