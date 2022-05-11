@@ -1,4 +1,4 @@
-# Stadtpuls Audio Sensors
+# Stadtpuls Ultra Sonic Sensors
 
 Basic Setup for running electrec mics with Heltec Wifi Kit 32 v2 using PlatformIO.
 
@@ -31,7 +31,7 @@ The people counter uses the following hardware components:
 
 Power supply is given by the micro USB cable and an attached power bank.
 
-### Specs of the sensor
+### Specs of the ultrasonic sensor
 | What              | HC-SR04 Specs |
 | ----------------- | ------------- |
 | min range         | 2cm           |
