@@ -160,7 +160,7 @@ void setup() {
   Heltec.begin(true /*DisplayEnable Enable*/, false /*LoRa Disable*/, true /*Serial Enable*/);
   Heltec.display->flipScreenVertically();
 
-  //Serial.begin(115200); // Starts the serial communication
+  Serial.begin(115200); // Starts the serial communication
   pinMode(button, INPUT); 
   pinMode(trigIN, OUTPUT); 
   pinMode(echoIN, INPUT); 
