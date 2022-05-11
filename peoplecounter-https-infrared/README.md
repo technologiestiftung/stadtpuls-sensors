@@ -1,6 +1,6 @@
 # Stadtpuls Infrared Sensors
 
-Basic Setup for running electrec mics with Heltec Wifi Kit 32 v2 using PlatformIO.
+Basic Setup for running the VL53L1X infrared sensor on an Arduino Board using PlatformIO.
 
 ## Software Setup
 
@@ -23,21 +23,30 @@ pio device monitor --baud 115200 --eol LF
 ## Hardware Setup EPS32 Peoplecounter
 
 The people counter uses the following hardware components:
-- Heltec v2
-- two Adafruit VL53L1X sensors
-- button
+- Arduino Uno 
+- two [Adafruit VL53L1X sensors](https://thepihut.com/products/adafruit-vl53l1x-time-of-flight-distance-sensor-30-to-4000mm-stemma-qt-qwiic)
 - bread board
-- cables, 220ohm ristors
+- cables
 
 Power supply is given by the micro USB cable and an attached power bank.
 
 ### Specs of the ultrasonic sensor
-| What         | HC-VL53L1X Specs |
-| ------------ | ---------------- |
-| min range    | 2cm              |
-| max range    | 4 meters         |
-| resolution   | 3 cm             |
-| Power Supply | 5V DC            |
+| What         | VL53L1X Specs |
+| ------------ | ------------- |
+| min range    | 2cm           |
+| max range    | 4 meters      |
+| Power Supply | 5V DC         |
+
+## Pin mapping to Heltec board
+|     | IN VL53L1X | OUT VL53L1X |
+| --- | ---------- | ----------- |
+| VCC | 5v         | 5v          |
+| SDA | SDA        | SDA         |
+| SCL | SCL        | SCL         |
+| GND | GND        | GND         |
 
 
-This approach strongly follows this beautiful tutorial: https://create.arduino.cc/projecthub/ryanchan/room-occupancy-counter-3b3ffa?ref=part&ref_id=10308&offset=2
+This approach strongly follows [this beautiful GitHub Repo](https://github.com/pololu/vl53l1x-arduino/blob/master/examples/ContinuousMultipleSensors/ContinuousMultipleSensors.ino
+).
+
+Follow [this YouTube video](https://www.youtube.com/watch?v=Sc_iVfeocvg) to get a first idea of the infrared sensor.
