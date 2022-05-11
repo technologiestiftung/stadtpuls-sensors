@@ -1,4 +1,4 @@
-![](https://img.shields.io/badge/Build%20with%20%E2%9D%A4%EF%B8%8F-at%20Technologiesitftung%20Berlin-blue)
+![](https://img.shields.io/badge/Built%20with%20%E2%9D%A4%EF%B8%8F-at%20Technologiestiftung%20Berlin-blue)
 
 # Stadtpuls Sensors
 
@@ -17,6 +17,7 @@ pio init --board <YOUR BOARD HERE>
 ## Environment Variables
 
 For some sensors we use the https request method to post measurements to stadtpuls. To do so we need to adjust the environments variables within the `env.sample.h`
+
 1. copy `env.sample.h.` to your `src` folder and rename to `env.h`
 2. include `src` folder to library paths in platformIO
 3. replace sample values with the values of your sensor in stadtpuls
@@ -24,9 +25,8 @@ For some sensors we use the https request method to post measurements to stadtpu
    1. open the URL of your server --> api.stadtpuls.com
    2. click on the lock icon to the left of your browser's search field
    3. show details about your certificate
-   4. you might be shown multiple certifcates, take the last one (the one to the most right) and download it  
+   4. you might be shown multiple certifcates, take the last one (the one to the most right) and download it
 5. save your `env.h`
-
 
 ## Contributors ✨
 
