@@ -1,4 +1,4 @@
-# Stadtpuls Audio Sensors
+# Stadtpuls Ultra Sonic Sensors
 
 Basic Setup for running electrec mics with Heltec Wifi Kit 32 v2 using Platformio.
 
