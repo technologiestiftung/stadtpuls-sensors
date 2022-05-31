@@ -14,7 +14,7 @@ static const PROGMEM u1_t NWKSKEY[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 static const u1_t PROGMEM APPSKEY[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                          0x00, 0x00, 0x00, 0x00};
-// LoRaWAN end-device address (DevAddr) – hould be in big-endian (aka msb) too
-// See http://thethingsnetwork.org/wiki/AddressSpace
+// LoRaWAN end-device address (DevAddr) – should be in big-endian (aka msb) too
+// See https://web.archive.org/web/20170728112659/https://www.thethingsnetwork.org/wiki/LoRaWAN/Address-Space
 static const u4_t DEVADDR =
     0x12345678; // <-- Change this address for every node!

@@ -45,9 +45,22 @@
 #include <Wire.h>
 #include "Adafruit_MCP9808.h"
 
-// Create the MCP9808 temperature sensor object
-Adafruit_MCP9808 tempsensor = Adafruit_MCP9808();
+// Schedule TX every this many seconds (might become longer due to duty cycle
+// limitations).ssss
+const unsigned TX_INTERVAL = 60 * 5; // 5 minutes
 
+// address the SDA and SCL pins on our heltec
+#define I2C_SDA_PIN 23
+#define I2C_SCL_PIN 22
+// create a new wire interface for passing to the
+// temp sensor
+TwoWire I2MCP = TwoWire(0);
+
+// Create the MCP9808 temperature sensor object
+Adafruit_MCP9808 tempsensor;
+
+float measurements[TX_INTERVAL] = {0};
+int measurements_counter = 0;
 int measuringPeriod = 2000; // in ms
 int measuringIteration = 0;
 unsigned long time_now = 0;
@@ -71,42 +84,17 @@ static osjob_t sendjob;
 
 void sample_data()
 {
-  tempsensor.wake(); // wake up, ready to read!
+  // tempsensor.wake(); // wake up, ready to read!
   measurement = tempsensor.readTempC();
-  tempsensor.shutdown_wake(1); // shutdown MSP9808 - power consumption ~0.1 mikro Ampere, stops temperature sampling
+  measurements[measurements_counter + 1] = measurement;
+  measurements_counter++;
+  Serial.println(measurements[measurements_counter]);
+  delay(250);
+  Serial.print("Temp: ");
+  Serial.print(measurement);
+  Serial.println(" C");
+  // tempsensor.shutdown(); // shutdown MSP9808 - power consumption ~0.1 mikro Ampere, stops temperature sampling
 }
-
-// void updateAverages()
-// {
-//   if (totalHighPeaksCount > 0)
-//   {
-//     averageHighPeaks = sumAllHighPeakValues / totalHighPeaksCount;
-//   }
-//   if (totalLowPeaksCount > 0)
-//   {
-//     averageLowPeaks = sumAllLowPeakValues / totalLowPeaksCount;
-//   }
-//   if (totalHighPeaksCount > 0 && totalLowPeaksCount > 0)
-//   {
-//     totalAverage = averageLowPeaks + ((averageHighPeaks - averageLowPeaks) / 2);
-//   }
-// }
-
-// void resetValues()
-// {
-//   sumAllHighPeakValues = 0;
-//   totalHighPeaksCount = 0;
-//   sumAllLowPeakValues = 0;
-//   totalLowPeaksCount = 0;
-//   maxPeak = 0;
-//   minPeak = 0;
-//   averageHighPeaks = 0;
-//   averageLowPeaks = 0;
-// }
-
-// Schedule TX every this many seconds (might become longer due to duty cycle
-// limitations).ssss
-const unsigned TX_INTERVAL = 60 * 5; // 5 minutes
 
 //
 // PIN MAPPING FOR HELTEC ESP32 V2 --> do not change
@@ -234,32 +222,6 @@ void onEvent(ev_t ev)
 // Bytes in Payload depend on (your) measurements -> change if
 // needed
 //
-void generate_payload()
-{
-  // See https://www.aeq-web.com/so-funktioniert-die-lora-payload-encoder-decoder-ttn/
-  // for more information on payload encoding.
-  //
-  // we cant transfer floats that is why we multiply with 100
-  // to remove the decimal values from the float
-  // since we also cant pass negative values we add 5000 to the measurement
-  // we need to remove these 5000 again on the decoder side
-  // function decodeUplink(input){
-  //   const tmp = (input.bytes[0] << 8 | input.bytes[1]);
-  //   return {
-  //     data:{
-  //         measurements:[(tmp-5000)/100)]
-  //       },
-  //       warnings:[],
-  //       errors:[]
-  //     }
-  // }
-  int tmp = ((int)(measurement * 100)) + 5000;
-  Serial.println("Measurement: " + String(measurement));
-  Serial.println("\n- - - - - - - - - - - - - - - -\n");
-
-  tx_payload[0] = tmp >> 8;
-  tx_payload[1] = tmp;
-}
 
 //
 // TTN UPLINK
@@ -277,10 +239,50 @@ void do_send(osjob_t *j)
   {
 
     Serial.println("\n----------------------------");
-    Serial.println("Sending playload now");
+    Serial.println("Sending payload now");
     Serial.println("- - - - - - - - - - - - - - - -\n");
+    // TODO: Averaging is not working. Why?
 
-    generate_payload();
+    // See https://www.aeq-web.com/so-funktioniert-die-lora-payload-encoder-decoder-ttn/
+    // for more information on payload encoding.
+    //
+    // we cant transfer floats that is why we multiply with 100
+    // to remove the decimal values from the float
+    // since we also cant pass negative values we add 5000 to the measurement
+    // we need to remove these 5000 again on the decoder side
+    // function decodeUplink(input){
+    //   const tmp = (input.bytes[0] << 8 | input.bytes[1]);
+    //   return {
+    //     data:{
+    //         measurements:[(tmp-5000)/100]
+    //       },
+    //       warnings:[],
+    //       errors:[]
+    //     }
+    // }
+    float sum = 0.0;
+    int values_count = 0;
+    for (int i = 0; i < TX_INTERVAL; i++)
+    {
+      if (measurements[i] != 0)
+      {
+        sum += measurements[i];
+        values_count += 1;
+      }
+    }
+    float average = sum / float(values_count);
+    Serial.print("Average: ");
+    Serial.println(average);
+
+    int tmp = ((int)(average * 100)) + 5000;
+    Serial.println("Measurement: " + String(tmp));
+    Serial.println("\n- - - - - - - - - - - - - - - -\n");
+    tx_payload[0] = tmp >> 8;
+    tx_payload[1] = tmp;
+    for (int i = 0; i < TX_INTERVAL; i++)
+    {
+      measurements[i] = 0.0;
+    }
 
     Serial.print("Payload: ");
     int x = 0;
@@ -300,12 +302,46 @@ void do_send(osjob_t *j)
 
 void setup()
 {
-  // TTN
+
   Serial.begin(115200);
-  SPI.begin(5, 19, 27, 18); //(MasterIN, SlaveOut,etc.)
   while (!Serial)
-    ;         // wait for Serial to be initialized
-  delay(100); // per sample code on RF_95 test
+    ; // wait for Serial to be initialized
+  I2MCP.begin(I2C_SDA_PIN, I2C_SCL_PIN);
+  // Adafruit temp sensor setup
+
+  // Make sure the sensor is found, you can also pass in a different i2c
+  // address with tempsensor.begin(0x19) for example, also can be left in blank for default address use
+  // Also there is a table with all addres possible for this sensor, you can connect multiple sensors
+  // to the same i2c bus, just configure each sensor with a different address and define multiple objects for that
+  //  A2 A1 A0 address
+  //  0  0  0   0x18  this is the default address
+  //  0  0  1   0x19
+  //  0  1  0   0x1A
+  //  0  1  1   0x1B
+  //  1  0  0   0x1C
+  //  1  0  1   0x1D
+  //  1  1  0   0x1E
+  //  1  1  1   0x1F
+  bool status = tempsensor.begin(0x18, &I2MCP);
+
+  if (!status)
+  {
+    Serial.println("Couldn't find MCP9808!");
+    while (1)
+      ;
+  }
+  Serial.println("Found MCP9808!");
+
+  tempsensor.setResolution(3); // sets the resolution mode of reading, the modes are defined in the table bellow:
+  // Mode Resolution SampleTime
+  //  0    0.5°C       30 ms
+  //  1    0.25°C      65 ms
+  //  2    0.125°C     130 ms
+  //  3    0.0625°C    250 ms
+
+  // TTN
+  SPI.begin(5, 19, 27, 18); //(MasterIN, SlaveOut,etc.)
+  delay(100);               // per sample code on RF_95 test
   Serial.println(F("Starting"));
 
   // LMIC init
@@ -392,36 +428,6 @@ void setup()
   LMIC_setDrTxpow(DR_SF7, 14);
   // TODO: More the code below to loop when you deploy
 
-  // Adafruit temp sensor setup
-
-  // Make sure the sensor is found, you can also pass in a different i2c
-  // address with tempsensor.begin(0x19) for example, also can be left in blank for default address use
-  // Also there is a table with all addres possible for this sensor, you can connect multiple sensors
-  // to the same i2c bus, just configure each sensor with a different address and define multiple objects for that
-  //  A2 A1 A0 address
-  //  0  0  0   0x18  this is the default address
-  //  0  0  1   0x19
-  //  0  1  0   0x1A
-  //  0  1  1   0x1B
-  //  1  0  0   0x1C
-  //  1  0  1   0x1D
-  //  1  1  0   0x1E
-  //  1  1  1   0x1F
-  if (!tempsensor.begin(0x18))
-  {
-    Serial.println("Couldn't find MCP9808! Check your connections and verify the address is correct.");
-    while (1)
-      ;
-  }
-
-  Serial.println("Found MCP9808!");
-
-  tempsensor.setResolution(3); // sets the resolution mode of reading, the modes are defined in the table bellow:
-  // Mode Resolution SampleTime
-  //  0    0.5°C       30 ms
-  //  1    0.25°C      65 ms
-  //  2    0.125°C     130 ms
-  //  3    0.0625°C    250 ms
   // Start job
   do_send(&sendjob);
 }
