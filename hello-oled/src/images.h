@@ -1,4 +1,5 @@
 // created using https://www.mischianti.org/images-to-byte-array-online-converter-cpp-arduino/
+// or use https://javl.github.io/image2cpp/
 
 #include <Arduino.h>
 const unsigned char citylab_logo[1024] PROGMEM = {
