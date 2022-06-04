@@ -33,6 +33,7 @@
  */
 
 #include <Arduino.h>
+
 // +++ LoRaWan TTN library
 // the order of these includes has to stay like this
 #include <lmic.h>
@@ -40,34 +41,54 @@
 #include <hal/hal.h>
 // arrrrrrggggghhhhhh!
 #include <SPI.h>
+#include <math.h>
 // our secrets
 #include "env.h"
 #include <Wire.h>
 #include "Adafruit_MCP9808.h"
-
+// #include <Adafruit_GFX.h>
+#include "heltec.h"
+#include "Adafruit_SSD1306.h"
+// #include "images.h"
+#include "grfx.h"
 // Schedule TX every this many seconds (might become longer due to duty cycle
 // limitations).ssss
 const unsigned TX_INTERVAL = 60 * 5; // 5 minutes
+
+// OLED display
+
+#define I2C_OLED_SDA_PIN 4
+#define I2C_OLED_SCL_PIN 15
+// remove the adafruit splash screen from the display
+#define SSD1306_NO_SPLASH 1
+#define SCREEN_WIDTH 128    // OLED display width, in pixels
+#define SCREEN_HEIGHT 64    // OLED display height, in pixels
+#define OLED_RESET 16       // Reset pin # (or -1 if sharing Arduino reset pin)
+#define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32 aaaaaaarrrrrggggghhhhh this is the other way around
+Adafruit_SSD1306 display;
+Grfx oled;
+
+// this comment https://github.com/espressif/arduino-esp32/issues/741#issuecomment-374371359
+// in the issue on I2C not working in the arduino-esp32 repo
+// gave me the solution to my not working I2C sensors that
+// Also this tutorial https://randomnerdtutorials.com/esp32-i2c-communication-arduino-ide/ Gave me some hints
 
 // address the SDA and SCL pins on our heltec
 #define I2C_SDA_PIN 23
 #define I2C_SCL_PIN 22
 // create a new wire interface for passing to the
 // temp sensor
-TwoWire I2MCP = TwoWire(0);
+TwoWire I2C_MCP = TwoWire(0);
+TwoWire I2C_OLED = TwoWire(1);
 
 // Create the MCP9808 temperature sensor object
 Adafruit_MCP9808 tempsensor;
 
-float measurements[TX_INTERVAL] = {0};
+double measurements_sum = 0;
 int measurements_counter = 0;
-int measuringPeriod = 2000; // in ms
-int measuringIteration = 0;
+int measuring_period = 2000; // in ms
+int measuring_iteration = 0;
 unsigned long time_now = 0;
-
-float measurement = 0;
-
-int SENSOR_PIN = 36;
 
 void do_send(osjob_t *j);
 
@@ -84,15 +105,19 @@ static osjob_t sendjob;
 
 void sample_data()
 {
+
   // tempsensor.wake(); // wake up, ready to read!
-  measurement = tempsensor.readTempC();
-  measurements[measurements_counter + 1] = measurement;
-  measurements_counter++;
-  Serial.println(measurements[measurements_counter]);
-  delay(250);
-  Serial.print("Temp: ");
-  Serial.print(measurement);
-  Serial.println(" C");
+  float measurement = tempsensor.readTempC();
+  measurements_counter += 1;
+  measurements_sum += measurement;
+  oled.drawValue("Measurement:", measurement, 0);
+  // display_measurement(measurement, 0);
+  // delay(250);
+  // Serial.print("Temp: ");
+  // Serial.print(measurement);
+  // Serial.println(" C");
+  // Serial.print("Average: ");
+  // Serial.println(measurements_sum / measurements_counter);
   // tempsensor.shutdown(); // shutdown MSP9808 - power consumption ~0.1 mikro Ampere, stops temperature sampling
 }
 
@@ -144,6 +169,34 @@ void onEvent(ev_t ev)
     break;
   case EV_JOINED:
     Serial.println(F("EV_JOINED"));
+    {
+      u4_t netid = 0;
+      devaddr_t devaddr = 0;
+      u1_t nwkKey[16];
+      u1_t artKey[16];
+      LMIC_getSessionKeys(&netid, &devaddr, nwkKey, artKey);
+      Serial.print("netid: ");
+      Serial.println(netid, DEC);
+      Serial.print("devaddr: ");
+      Serial.println(devaddr, HEX);
+      Serial.print("artKey: ");
+      for (uint8_t i = 0; i < sizeof(artKey); ++i)
+      {
+        Serial.print(artKey[i], HEX);
+      }
+      Serial.println("");
+      Serial.print("nwkKey: ");
+      for (uint8_t i = 0; i < sizeof(nwkKey); ++i)
+      {
+        Serial.print(nwkKey[i], HEX);
+      }
+      Serial.println("");
+      LMIC_setSeqnoUp(140);
+    }
+
+    // Disable link check validation (automatically enabled
+    // during join, but not supported by TTN at this time).
+    LMIC_setLinkCheckMode(0);
     break;
 
   // This event is defined but not used in the code. No
@@ -161,7 +214,7 @@ void onEvent(ev_t ev)
     break;
   case EV_TXCOMPLETE:
     Serial.println(F("EV_TXCOMPLETE (includes waiting for RX windows)"));
-    // resetValues();
+    oled.drawString("TX complete", 250);
     if (LMIC.txrxFlags & TXRX_ACK)
       Serial.println(F("Received ack"));
     if (LMIC.dataLen)
@@ -237,12 +290,10 @@ void do_send(osjob_t *j)
   }
   else
   {
-
+    oled.drawString("Sending payload:", 200);
     Serial.println("\n----------------------------");
     Serial.println("Sending payload now");
     Serial.println("- - - - - - - - - - - - - - - -\n");
-    // TODO: Averaging is not working. Why?
-
     // See https://www.aeq-web.com/so-funktioniert-die-lora-payload-encoder-decoder-ttn/
     // for more information on payload encoding.
     //
@@ -260,29 +311,19 @@ void do_send(osjob_t *j)
     //       errors:[]
     //     }
     // }
-    float sum = 0.0;
-    int values_count = 0;
-    for (int i = 0; i < TX_INTERVAL; i++)
-    {
-      if (measurements[i] != 0)
-      {
-        sum += measurements[i];
-        values_count += 1;
-      }
-    }
-    float average = sum / float(values_count);
+
+    float average = measurements_sum / measurements_counter;
+    // // check if value is NaN
+
     Serial.print("Average: ");
     Serial.println(average);
+    // display_measurement(average, 0);
 
     int tmp = ((int)(average * 100)) + 5000;
     Serial.println("Measurement: " + String(tmp));
     Serial.println("\n- - - - - - - - - - - - - - - -\n");
     tx_payload[0] = tmp >> 8;
     tx_payload[1] = tmp;
-    for (int i = 0; i < TX_INTERVAL; i++)
-    {
-      measurements[i] = 0.0;
-    }
 
     Serial.print("Payload: ");
     int x = 0;
@@ -293,9 +334,14 @@ void do_send(osjob_t *j)
       x++;
     }
     Serial.println();
-
+    // display_message("Packet queued");
     LMIC_setTxData2(1, tx_payload, sizeof(tx_payload), 0);
     Serial.println(F("Packet queued"));
+    oled.drawValue("Send average", average, 250);
+    oled.drawString("Packet queued", 250);
+    // reset measurements
+    measurements_sum = 0;
+    measurements_counter = 0;
   }
   // Next TX is scheduled after TX_COMPLETE event.
 }
@@ -306,8 +352,24 @@ void setup()
   Serial.begin(115200);
   while (!Serial)
     ; // wait for Serial to be initialized
-  I2MCP.begin(I2C_SDA_PIN, I2C_SCL_PIN);
-  // Adafruit temp sensor setup
+      // init the I2C connections
+  I2C_MCP.begin(I2C_SDA_PIN, I2C_SCL_PIN);
+  I2C_OLED.begin(I2C_OLED_SDA_PIN, I2C_OLED_SCL_PIN);
+  // allocate memory for the OLED display
+  display = Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT, &I2C_OLED, OLED_RESET);
+  bool display_status = display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
+  if (!display_status)
+  {
+    Serial.println("Could not find OLED display");
+    while (1)
+      ;
+  }
+  oled.init(&display);
+  Serial.println("Found OLED display");
+
+  oled.splash(2000);
+
+  //  Adafruit temp sensor setup
 
   // Make sure the sensor is found, you can also pass in a different i2c
   // address with tempsensor.begin(0x19) for example, also can be left in blank for default address use
@@ -322,16 +384,18 @@ void setup()
   //  1  0  1   0x1D
   //  1  1  0   0x1E
   //  1  1  1   0x1F
-  bool status = tempsensor.begin(0x18, &I2MCP);
+  bool tempsensor_status = tempsensor.begin(0x18, &I2C_MCP);
 
-  if (!status)
+  if (!tempsensor_status)
   {
     Serial.println("Couldn't find MCP9808!");
     while (1)
       ;
   }
   Serial.println("Found MCP9808!");
+  oled.drawString("Found MCP9808!", 500);
 
+  // display_message("Found MCP9808!", 250);
   tempsensor.setResolution(3); // sets the resolution mode of reading, the modes are defined in the table bellow:
   // Mode Resolution SampleTime
   //  0    0.5°C       30 ms
@@ -339,10 +403,12 @@ void setup()
   //  2    0.125°C     130 ms
   //  3    0.0625°C    250 ms
 
+  oled.drawString("Initilizing LoRaWAN!", 500);
+
   // TTN
   SPI.begin(5, 19, 27, 18); //(MasterIN, SlaveOut,etc.)
   delay(100);               // per sample code on RF_95 test
-  Serial.println(F("Starting"));
+  // display_message("TTN connect", 250);
 
   // LMIC init
   os_init();
@@ -426,9 +492,11 @@ void setup()
   // Set data rate and transmit power for uplink
   // (note: txpow seems to be ignored by the library)
   LMIC_setDrTxpow(DR_SF7, 14);
-  // TODO: More the code below to loop when you deploy
+
+  oled.drawString("Start sensing", 500);
 
   // Start job
+  // TODO: Add this back in when we deploy
   do_send(&sendjob);
 }
 
@@ -436,9 +504,10 @@ void loop()
 {
   os_runloop_once();
 
-  if (millis() >= measuringIteration * measuringPeriod)
+  if (millis() >= measuring_iteration * measuring_period)
   {
+    // Serial.println("Sampling data");
     sample_data();
-    measuringIteration += 1;
+    measuring_iteration += 1;
   }
 }
