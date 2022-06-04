@@ -30,4 +30,5 @@ jobs:
     - name: Run PlatformIO
       run: |
         cd temperature-http
+        cp src/env_sample.h src/env.h
         pio run
