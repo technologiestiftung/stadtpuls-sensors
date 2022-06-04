@@ -1,18 +1,36 @@
-/*
-  Rui Santos
-  Complete project details at https://RandomNerdTutorials.com/solved-reconnect-esp32-to-wifi/
+// Copyright (c) 2022 Technologiestiftung Berlin, Lucas Vogel, Ingo Hinterding & Fabian Morón Zirfas
+//
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
 
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files.
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-  The above copyright notice and this permission notice shall be included in all
-  copies or substantial portions of the Software.
-*/
+// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// Based on the code from the following sources:
+//
+//
+// - Rui Santos - esp32 tutorials - https://RandomNerdTutorials.com/
+// - Adafruit_MCP9808_Library - examples (temp sensor) - https://github.com/adafruit/Adafruit_MCP9808_Library
+// - Adafruit_SSD1306_Library - examples (oled display) - https://github.com/adafruit/Adafruit_SSD1306
+// - Adafruit_GFX_Library - examples (oled display) - https://github.com/adafruit/Adafruit-GFX-Library
+// - espressif arduino-esp32 examples - https://github.com/espressif/arduino-esp32/
+// - Heltec_ESP32 - examples (board) - https://github.com/HelTecAutomation/Heltec_ESP32/
+//   Permission is hereby granted, free of charge, to any person obtaining a copy
+//   of this software and associated documentation files.
+
+//   The above copyright notice and this permission notice shall be included in all
+//   copies or substantial portions of the Software.
 
 #include <Arduino.h>
-#include "heltec.h"
+// #include "heltec.h"
 #include <Wire.h>
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <Adafruit_GFX.h>
+#include "Adafruit_SSD1306.h"
 #include "Adafruit_MCP9808.h"
 #include "grfx.h"
 #include "env.h"
@@ -78,6 +96,7 @@ void setup()
   oled.init(&display);
   Serial.println("Found OLED display");
   oled.splash(2000);
+  oled.drawMultilineString("Hi, I'm", sensor_name, 1000);
 
   bool status = tempsensor.begin(0x18, &I2C_MCP);
 
@@ -99,6 +118,7 @@ void setup()
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   Serial.print("Connecting to WiFi ..");
+
   while (WiFi.status() != WL_CONNECTED)
   {
     Serial.print('.');
@@ -106,6 +126,7 @@ void setup()
   }
   Serial.println();
   Serial.println(WiFi.localIP());
+
   digitalWrite(BUILD_IN_LED, HIGH);
 
   oled.drawMultilineString("Connected to WiFi", strdup(ssid), 500);
@@ -145,5 +166,51 @@ void loop()
     oled.drawValue("Temperatur:", c, 0);
 
     measuring_iteration += 1;
+
+    String payload = "{\"measurements\": [" + String(c) + "], \"sensor_name\": \"" + sensor_name + "\"}";
+    WiFiClientSecure client;
+
+    // client.setCACert(root_ca);
+    client.setInsecure(); // skip verification
+
+    if (!client.connect(server, 443))
+    {
+      Serial.println("Connection failed!");
+    }
+    else
+    {
+      Serial.println("Connected to server!");
+      Serial.println("\n- - - - - - - - - - - - - - - -");
+      // Make a HTTP request:
+      client.println("POST " + String(path) + " HTTP/1.0");
+      client.println("Host: " + String(server));
+      client.println("Content-Type: application/json");
+      client.println("Content-Length: " + String(payload.length()));
+      client.println("Authorization: Bearer " + String(auth_token));
+      client.println("Connection: close");
+      client.println();
+      client.println(payload);
+
+      while (client.connected())
+      {
+        String line = client.readStringUntil('\n');
+        if (line == "\r")
+        {
+          Serial.println("POST Success!");
+          break;
+        }
+      }
+      // if there are incoming bytes available
+      // from the server, read them and print them:
+      while (client.available())
+      {
+        char c = client.read();
+        Serial.write(c);
+      }
+
+      Serial.println("\n- - - - - - - - - - - - - - - -");
+      oled.drawString("Sent data!", 250);
+      client.stop();
+    }
   }
 }

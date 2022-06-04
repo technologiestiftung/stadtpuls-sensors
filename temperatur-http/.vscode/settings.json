@@ -18,5 +18,23 @@
     "titleBar.inactiveBackground": "#6ce18999",
     "titleBar.inactiveForeground": "#15202b99"
   },
-  "peacock.color": "#6ce189"
+  "peacock.color": "#6ce189",
+  "files.associations": {
+    "*.fish": "fish",
+    ".skhdrc": "shellscript",
+    "*.conf": "nginx",
+    "*.html": "html",
+    "*.mdx": "markdown",
+    "*.sql": "sql",
+    "__bit_reference": "cpp",
+    "__hash_table": "cpp",
+    "__split_buffer": "cpp",
+    "array": "cpp",
+    "initializer_list": "cpp",
+    "string": "cpp",
+    "string_view": "cpp",
+    "unordered_map": "cpp",
+    "vector": "cpp",
+    "iterator": "cpp"
+  }
 }
