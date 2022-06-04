@@ -25,18 +25,42 @@
 //   copies or substantial portions of the Software.
 
 #include <Arduino.h>
-// #include "heltec.h"
 #include <Wire.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <Adafruit_GFX.h>
 #include "Adafruit_SSD1306.h"
-#include "Adafruit_MCP9808.h"
 #include "grfx.h"
+#include "Adafruit_MCP9808.h"
 #include "env.h"
+#include "util/sensors/env_cloak.h"
+// #include "scripts/sensors/env_ares.h"
+// #include "scripts/sensors/env_blink.h"
+// #include "scripts/sensors/env_cypher.h"
+// #include "scripts/sensors/env_dagger.h"
+// #include "scripts/sensors/env_dazzler.h"
+// #include "scripts/sensors/env_echo.h"
+// #include "scripts/sensors/env_elektra.h"
+// #include "scripts/sensors/env_elixir.h"
+// #include "scripts/sensors/env_falcon.h"
+// #include "scripts/sensors/env_havok.h"
+// #include "scripts/sensors/env_mantis.h"
+// #include "scripts/sensors/env_medusa.h"
+// #include "scripts/sensors/env_moonstar.h"
+// #include "scripts/sensors/env_nova.h"
+// #include "scripts/sensors/env_pixie.h"
+// #include "scripts/sensors/env_polaris.h"
+// #include "scripts/sensors/env_storm.h"
+// #include "scripts/sensors/env_tigra.h"
+// #include "scripts/sensors/env_wasp.h"
 
-#define I2C_OLED_SDA_PIN 4
-#define I2C_OLED_SCL_PIN 15
+//  ██████╗ ██╗     ███████╗██████╗
+// ██╔═══██╗██║     ██╔════╝██╔══██╗
+// ██║   ██║██║     █████╗  ██║  ██║
+// ██║   ██║██║     ██╔══╝  ██║  ██║
+// ╚██████╔╝███████╗███████╗██████╔╝
+//  ╚═════╝ ╚══════╝╚══════╝╚═════╝
+
 // remove the adafruit splash screen from the display
 #define SSD1306_NO_SPLASH 1
 #define SCREEN_WIDTH 128    // OLED display width, in pixels
@@ -46,17 +70,36 @@
 Adafruit_SSD1306 display;
 Grfx oled;
 
+// ██╗██████╗  ██████╗
+// ██║╚════██╗██╔════╝
+// ██║ █████╔╝██║
+// ██║██╔═══╝ ██║
+// ██║███████╗╚██████╗
+// ╚═╝╚══════╝ ╚═════╝
+
+#define I2C_OLED_SDA_PIN 4
+#define I2C_OLED_SCL_PIN 15
 #define I2C_SDA_PIN 23
 #define I2C_SCL_PIN 22
 TwoWire I2C_MCP = TwoWire(0);
 TwoWire I2C_OLED = TwoWire(1);
+//
+// ████████╗███████╗███╗   ███╗██████╗
+// ╚══██╔══╝██╔════╝████╗ ████║██╔══██╗
+//    ██║   █████╗  ██╔████╔██║██████╔╝
+//    ██║   ██╔══╝  ██║╚██╔╝██║██╔═══╝
+//    ██║   ███████╗██║ ╚═╝ ██║██║
+//    ╚═╝   ╚══════╝╚═╝     ╚═╝╚═╝
 
 // Create the MCP9808 temperature sensor object
 Adafruit_MCP9808 tempsensor;
 
-// wifi things
-unsigned long previous_millis = 0;
-unsigned long interval = 30000;
+// ██╗    ██╗██╗███████╗██╗
+// ██║    ██║██║██╔════╝██║
+// ██║ █╗ ██║██║█████╗  ██║
+// ██║███╗██║██║██╔══╝  ██║
+// ╚███╔███╔╝██║██║     ██║
+//  ╚══╝╚══╝ ╚═╝╚═╝     ╚═╝
 
 // Replace with your network credentials
 const char *ssid = secret_ssid; // imported from env.h
@@ -64,26 +107,67 @@ const char *password = secret_password;
 
 //--------------
 
+// ████████╗██╗███╗   ███╗███████╗
+// ╚══██╔══╝██║████╗ ████║██╔════╝
+//    ██║   ██║██╔████╔██║█████╗
+//    ██║   ██║██║╚██╔╝██║██╔══╝
+//    ██║   ██║██║ ╚═╝ ██║███████╗
+//    ╚═╝   ╚═╝╚═╝     ╚═╝╚══════╝
+
 double measurements_sum = 0;
 int measurements_counter = 0;
 int measuring_period = 2000; // in ms
 int measuring_iteration = 0;
 unsigned long time_now = 0;
+// wifi things
+unsigned long previous_millis = 0;
+unsigned long interval = 30000;
 
+// misc unused
 #define BUILD_IN_LED 25
 #define FORGET_PIN 39
+
+// ███████╗███████╗████████╗██╗   ██╗██████╗
+// ██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗
+// ███████╗█████╗     ██║   ██║   ██║██████╔╝
+// ╚════██║██╔══╝     ██║   ██║   ██║██╔═══╝
+// ███████║███████╗   ██║   ╚██████╔╝██║
+// ╚══════╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝
 
 void setup()
 {
 
   pinMode(BUILD_IN_LED, OUTPUT);
   pinMode(FORGET_PIN, INPUT_PULLUP);
+
+  // ███████╗███████╗██████╗ ██╗ █████╗ ██╗
+  // ██╔════╝██╔════╝██╔══██╗██║██╔══██╗██║
+  // ███████╗█████╗  ██████╔╝██║███████║██║
+  // ╚════██║██╔══╝  ██╔══██╗██║██╔══██║██║
+  // ███████║███████╗██║  ██║██║██║  ██║███████╗
+  // ╚══════╝╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚══════╝
+
   Serial.begin(115200);
   while (!Serial)
     ;
+  // ██╗██████╗  ██████╗
+  // ██║╚════██╗██╔════╝
+  // ██║ █████╔╝██║
+  // ██║██╔═══╝ ██║
+  // ██║███████╗╚██████╗
+  // ╚═╝╚══════╝ ╚═════╝
+
   // init the I2C connections
   I2C_MCP.begin(I2C_SDA_PIN, I2C_SCL_PIN);
   I2C_OLED.begin(I2C_OLED_SDA_PIN, I2C_OLED_SCL_PIN);
+
+  //  ██████╗ ██╗     ███████╗██████╗
+  // ██╔═══██╗██║     ██╔════╝██╔══██╗
+  // ██║   ██║██║     █████╗  ██║  ██║
+  // ██║   ██║██║     ██╔══╝  ██║  ██║
+  // ╚██████╔╝███████╗███████╗██████╔╝
+  //  ╚═════╝ ╚══════╝╚══════╝╚═════╝
+
   display = Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT, &I2C_OLED, OLED_RESET);
 
   bool display_status = display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
@@ -97,6 +181,20 @@ void setup()
   Serial.println("Found OLED display");
   oled.splash(2000);
   oled.drawMultilineString("Hi, I'm", sensor_name, 1000);
+
+  // ████████╗███████╗███╗   ███╗██████╗
+  // ╚══██╔══╝██╔════╝████╗ ████║██╔══██╗
+  //    ██║   █████╗  ██╔████╔██║██████╔╝
+  //    ██║   ██╔══╝  ██║╚██╔╝██║██╔═══╝
+  //    ██║   ███████╗██║ ╚═╝ ██║██║
+  //    ╚═╝   ╚══════╝╚═╝     ╚═╝╚═╝
+
+  // ███████╗███████╗███╗   ██╗███████╗ ██████╗ ██████╗
+  // ██╔════╝██╔════╝████╗  ██║██╔════╝██╔═══██╗██╔══██╗
+  // ███████╗█████╗  ██╔██╗ ██║███████╗██║   ██║██████╔╝
+  // ╚════██║██╔══╝  ██║╚██╗██║╚════██║██║   ██║██╔══██╗
+  // ███████║███████╗██║ ╚████║███████║╚██████╔╝██║  ██║
+  // ╚══════╝╚══════╝╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝
 
   bool status = tempsensor.begin(0x18, &I2C_MCP);
 
@@ -115,6 +213,13 @@ void setup()
   //  2    0.125°C     130 ms
   //  3    0.0625°C    250 ms
 
+  // ██╗    ██╗██╗███████╗██╗
+  // ██║    ██║██║██╔════╝██║
+  // ██║ █╗ ██║██║█████╗  ██║
+  // ██║███╗██║██║██╔══╝  ██║
+  // ╚███╔███╔╝██║██║     ██║
+  //  ╚══╝╚══╝ ╚═╝╚═╝     ╚═╝
+
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   Serial.print("Connecting to WiFi ..");
@@ -132,8 +237,22 @@ void setup()
   oled.drawMultilineString("Connected to WiFi", strdup(ssid), 500);
 }
 
+// ██╗      ██████╗  ██████╗ ██████╗
+// ██║     ██╔═══██╗██╔═══██╗██╔══██╗
+// ██║     ██║   ██║██║   ██║██████╔╝
+// ██║     ██║   ██║██║   ██║██╔═══╝
+// ███████╗╚██████╔╝╚██████╔╝██║
+// ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝
+
 void loop()
 {
+
+  // ██╗    ██╗██╗███████╗██╗
+  // ██║    ██║██║██╔════╝██║
+  // ██║ █╗ ██║██║█████╗  ██║
+  // ██║███╗██║██║██╔══╝  ██║
+  // ╚███╔███╔╝██║██║     ██║
+  //  ╚══╝╚══╝ ╚═╝╚═╝     ╚═╝
 
   unsigned long current_millis = millis();
   // if WiFi is down, try reconnecting
@@ -148,10 +267,16 @@ void loop()
     previous_millis = current_millis;
   }
 
-  // Read and print out the temperature, then convert to *F
+  // ████████╗███████╗███╗   ███╗██████╗
+  // ╚══██╔══╝██╔════╝████╗ ████║██╔══██╗
+  //    ██║   █████╗  ██╔████╔██║██████╔╝
+  //    ██║   ██╔══╝  ██║╚██╔╝██║██╔═══╝
+  //    ██║   ███████╗██║ ╚═╝ ██║██║
+  //    ╚═╝   ╚══════╝╚═╝     ╚═╝╚═╝
 
   if (millis() >= measuring_iteration * measuring_period)
   {
+    // Read and print out the temperature, then convert to *F
     // tempsensor.shutdown_wake(false); // wakey wakey!
 
     // Serial.println("Sampling data");
@@ -163,14 +288,21 @@ void loop()
     // Serial.print(f);
     // Serial.println(" F");
     // tempsensor.shutdown_wake(true); // sleep the sensor
-    oled.drawValue("Temperatur:", c, 0);
+    oled.drawValue("Temperature:", c, 0);
 
     measuring_iteration += 1;
+
+    // ██╗  ██╗████████╗████████╗██████╗
+    // ██║  ██║╚══██╔══╝╚══██╔══╝██╔══██╗
+    // ███████║   ██║      ██║   ██████╔╝
+    // ██╔══██║   ██║      ██║   ██╔═══╝
+    // ██║  ██║   ██║      ██║   ██║
+    // ╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝
 
     String payload = "{\"measurements\": [" + String(c) + "], \"sensor_name\": \"" + sensor_name + "\"}";
     WiFiClientSecure client;
 
-    // client.setCACert(root_ca);
+    // client.setCACert(root_ca);// if you want to be save
     client.setInsecure(); // skip verification
 
     if (!client.connect(server, 443))
@@ -209,7 +341,7 @@ void loop()
       }
 
       Serial.println("\n- - - - - - - - - - - - - - - -");
-      oled.drawString("Sent data!", 250);
+      oled.drawStringWithoutClear("Sent data!", oled.margin, oled.margin + 20, 250);
       client.stop();
     }
   }
