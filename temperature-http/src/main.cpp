@@ -37,9 +37,10 @@
 #include "Adafruit_MCP9808.h"
 #include <Preferences.h>
 #include "env.h"
-#include "util/sensors/env_cloak.h"
+
 // #include "util/sensors/env_ares.h"
 // #include "util/sensors/env_blink.h"
+#include "util/sensors/env_cloak.h"
 // #include "util/sensors/env_cypher.h"
 // #include "util/sensors/env_dagger.h"
 // #include "util/sensors/env_dazzler.h"
@@ -257,6 +258,8 @@ void setup()
   if (!status)
   {
     Serial.println("Couldn't find MCP9808!");
+    oled.drawString("Cant find temp sensor", 0);
+
     while (1)
       ;
   }
