@@ -1,12 +1,13 @@
 ![](https://img.shields.io/badge/Built%20with%20%E2%9D%A4%EF%B8%8F-at%20Technologiestiftung%20Berlin-blue)
+
 # Temperature over HTTP(s)
 
 As seen on [republica 2022 in the makerspace](https://re-publica.com/en/node/359)
 
-
-
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+
 [![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
+
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 <!--
@@ -49,10 +50,10 @@ Read more here https://allcontributors.org/
 Get fancy shields at https://shields.io
  -->
 
-
 ## Prerequisites
 
 - PlatformIO - https://platformio.org/
+
 ## Installation
 
 ```bash
@@ -63,23 +64,27 @@ brew install platformio
 
 ## Usage
 
-  
-  ```bash
-  pio pkg install
-  pio run
-  pio run --target upload
-  pio device monitor -b 115200
-  ```
-
+```bash
+# install all needed libraries
+pio pkg install
+# build the binary locally
+pio run
+# upload all the files in the data folder to the SPIFFS
+pio run --target uploadfs
+# upload the binary to the board
+pio run --target upload
+# see its output in the serial monitor
+pio device monitor -b 115200
+```
 
 ## Development
 
-```plain
+````plain
 ## Wiring
 
 ```plain
 //                                             HELTEC WIFI Kit 32
-// 
+//
 //                                      +-----------------------------+
 //      MCP9808                         |                             |
 //                                      |                             |
@@ -109,9 +114,10 @@ brew install platformio
 //                                      |                             |
 //                                      |                             |
 //                                      +-----------------------------+
-```
+````
 
 ![](./docs/wiring-temp_bb.png)
+
 ```
 
 ## Contributors
@@ -170,3 +176,4 @@ Texts and content available as [CC BY](https://creativecommons.org/licenses/by/3
 </table>
 
 ## Related Projects
+```

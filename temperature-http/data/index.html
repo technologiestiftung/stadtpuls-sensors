@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>%BOARD_NAME%</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <form action="/post" method="post">
+        <ul class="flex-outer">
+          <h1>%BOARD_NAME% Access Point</h1>
+          <p>Please enter the credentials to the Wifi you want to use here and reboot the board afterwards.</p>
+          <li>
+            <label for="ssid">SSID:</label>
+            <input
+              type="text"
+              id="ssid"
+              name="ssid"
+              placeholder="Enter WiFi name here"
+            />
+          </li>
+          <li>
+            <label for="password">password:</label>
+            <input
+              type="text"
+              id="password"
+              name="password"
+              placeholder="Enter WiFi password here"
+            />
+          </li>
+          <li class="button"><button type="submit">Send</button></li>
+        </ul>
+      </form>
+    </div>
+  </body>
+</html>

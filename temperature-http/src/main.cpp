@@ -30,6 +30,7 @@
 #include <WiFiClientSecure.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include "SPIFFS.h"
 #include <Adafruit_GFX.h>
 #include "Adafruit_SSD1306.h"
 #include "grfx.h"
@@ -109,6 +110,7 @@ String ssid; // = secret_ssid;             // imported from env.h
 String password;
 //= "foo"; // secret_password;
 bool setup_access_point = false;
+const char *ap_ssid = sensor_name;
 const char *user_ssid = "esp32";
 const char *user_password = "123456789";
 const char *PARAM_SSID = "ssid";
@@ -118,6 +120,40 @@ Preferences preferences;
 void notFound(AsyncWebServerRequest *request)
 {
   request->send(404, "text/plain", "Not found");
+}
+/**
+ * @brief function to handle replacement in html templates
+ *
+ * @param var the string to replace
+ * @return String the result of the replacement
+ */
+String processor(const String &var)
+{
+
+  preferences.begin("credentials", false);
+
+  String new_ssid = preferences.getString("ssid", "");
+  String new_password = preferences.getString("password", "");
+
+  Serial.println(var);
+  if (var == "STATE")
+  {
+    return "OK";
+  }
+  if (var == "SSID")
+  {
+    return new_ssid;
+  }
+  if (var == "PASSWORD")
+  {
+    return new_password;
+  }
+  if (var == "BOARD_NAME")
+  {
+    return sensor_name;
+  }
+  preferences.end();
+  return String();
 }
 //--------------
 
@@ -131,6 +167,7 @@ void notFound(AsyncWebServerRequest *request)
 double measurements_sum = 0;
 int measurements_counter = 0;
 int measuring_period = 2000; // in ms
+
 int measuring_iteration = 0;
 unsigned long time_now = 0;
 // wifi things
@@ -274,9 +311,16 @@ void setup()
 
   if (setup_access_point)
   {
+    // Initialize SPIFFS
+    if (!SPIFFS.begin(true))
+    {
+      Serial.println("An Error has occurred while mounting SPIFFS");
+      return;
+    }
+    oled.drawString("could not find WiFi", 500);
     Serial.print("setting up access point");
-    oled.drawString("setting up access point", 500);
-    WiFi.softAP(user_ssid, user_password);
+    oled.drawMultilineString("Creating access point", (char *)ap_ssid, 1000);
+    WiFi.softAP(ap_ssid);
     WiFi.mode(WIFI_AP);
     IPAddress IP = WiFi.softAPIP();
     Serial.print("AP IP address: ");
@@ -284,46 +328,51 @@ void setup()
     String ip = "http://" + IP.toString();
     char *cstr = new char[ip.length() + 1];
     strcpy(cstr, ip.c_str());
-    oled.drawString("could not find WiFi", 2000);
-    oled.drawMultilineString("(open) Access point", (char *)user_ssid, 0);
+    oled.drawMultilineString("(open) Access point:", (char *)ap_ssid, 0);
     oled.drawStringWithoutClear("GoTo:", oled.margin, oled.margin + 20, 0);
     oled.drawStringWithoutClear(cstr, oled.margin, oled.margin + 30, 0);
 
+    // Route to load style.css file
+    ap_server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request)
+                 { request->send(SPIFFS, "/style.css", "text/css"); });
+
     ap_server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-                 { request->send(200, "text/html", "<style>*{font-family: monospace; font-size:12;}</style>   <form action=\"/post\" method=\"post\">      <ul>        <li>          <label for=\"ssid\">SSID:</label>          <input type=\"text\" id=\"ssid\" name=\"ssid\" />        </li>        <li>          <label for=\"password\">password:</label>          <input type=\"text\" id=\"password\" name=\"password\" />        </li>        <li class=\"button\">          <button type=\"submit\">Send</button>        </li>      </ul>    </form>"); });
+                 { request->send(SPIFFS, "/index.html", String(), false, processor); });
     // Send a POST request to <IP>/post
     // with a form field ssid and password set to <ssid> and <password>
     ap_server.on("/post", HTTP_POST, [](AsyncWebServerRequest *request)
                  {
-                  String user_ssid;
-                  String user_password;
-                   if (request->hasParam(PARAM_SSID, true))
-                  {
-                      user_ssid = request->getParam(PARAM_SSID, true)->value();
-                  }
-                  else
-                  {
-                      user_ssid = "No ssid sent";
-                  }
-                  if (request->hasParam(PARAM_PASSWORD, true))
-                  {
-                      user_password = request->getParam(PARAM_PASSWORD, true)->value();
-                  }
-                  else
-                  {
-                      user_password = "No password sent";
-                  }
+      String user_ssid;
+      String user_password;
+      if (request->hasParam(PARAM_SSID, true))
+      {
+        user_ssid = request->getParam(PARAM_SSID, true)->value();
+      }
+      else
+      {
+        user_ssid = "No ssid sent";
+      }
+      if (request->hasParam(PARAM_PASSWORD, true))
+      {
+        user_password = request->getParam(PARAM_PASSWORD, true)->value();
+      }
+      else
+      {
+        user_password = "No password sent";
+      }
 
-                  preferences.begin("credentials", false);
-                  preferences.putString("ssid", user_ssid);
-                  preferences.putString("password", user_password);
-                  Serial.println("ssid: " + user_ssid);
-                  Serial.println("password: " + user_password);
-                  Serial.println("Please Restart the device");
+      preferences.begin("credentials", false);
+      preferences.putString("ssid", user_ssid);
+      preferences.putString("password", user_password);
+      Serial.println("ssid: " + user_ssid);
+      Serial.println("password: " + user_password);
+      Serial.println("Please Restart the device");
 
-                  oled.drawMultilineString("Saving credentials", "Please reboot", 0);
-                  request->send(200, "text/plain", "SSID: " + user_ssid + " PASSWORD: " + user_password); });
+      request->send(SPIFFS, "/post.html", String(), false, processor); });
+    // request->send(200, "text/plain", "SSID: " + user_ssid + " PASSWORD: " + user_password); });
     // set password in prefs
+    oled.drawMultilineString("Saving credentials", "Please reboot", 30000);
+    ESP.restart();
 
     ap_server.onNotFound(notFound);
 
@@ -331,7 +380,6 @@ void setup()
   }
   else
   {
-
     Serial.println();
     Serial.println(WiFi.localIP());
 
