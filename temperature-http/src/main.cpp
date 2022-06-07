@@ -373,11 +373,10 @@ void setup()
       Serial.println("password: " + user_password);
       Serial.println("Please Restart the device");
 
+      oled.drawMultilineString("Saving credentials", "Please reboot", 0);
       request->send(SPIFFS, "/post.html", String(), false, processor); });
-    // request->send(200, "text/plain", "SSID: " + user_ssid + " PASSWORD: " + user_password); });
     // set password in prefs
-    oled.drawMultilineString("Saving credentials", "Please reboot", 30000);
-    ESP.restart();
+    // request->send(200, "text/plain", "SSID: " + user_ssid + " PASSWORD: " + user_password); });
 
     ap_server.onNotFound(notFound);
 
