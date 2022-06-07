@@ -14,6 +14,7 @@ public:
   int margin;
   void init(Adafruit_SSD1306 *_oled);
   void splash(int timeout);
+  void clearDisplay(int timeout);
   void drawString(char message[], int timeout);
   void drawValue(char message[], double value, int timeout);
   void drawMultilineString(char message1[], char message2[], int timeout);

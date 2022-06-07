@@ -43,6 +43,13 @@ void Grfx::drawMultilineString(char message1[], char message2[], int timeout)
   delay(timeout);
 }
 
+void Grfx::clearDisplay(int timeout)
+{
+  oled->clearDisplay(); // Clear display buffer
+  oled->display();      // Display buffer
+  delay(timeout);
+}
+
 void Grfx::drawStringWithoutClear(char message1[], int16_t x, int16_t y, int timeout)
 {
   oled->setTextSize(1);              // Set text size to 1

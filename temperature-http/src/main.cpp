@@ -372,8 +372,8 @@ void setup()
       Serial.println("ssid: " + user_ssid);
       Serial.println("password: " + user_password);
       Serial.println("Please Restart the device");
-
-      oled.drawMultilineString("Saving credentials", "Please reboot", 0);
+      oled.clearDisplay(0);
+      oled.drawString("Saving credentials", 200);
       request->send(SPIFFS, "/post.html", String(), false, processor); });
     // set password in prefs
     // request->send(200, "text/plain", "SSID: " + user_ssid + " PASSWORD: " + user_password); });
@@ -407,6 +407,7 @@ void loop()
     preferences.begin("credentials", false);
     preferences.clear();
     preferences.end();
+    Serial.println("Credentials cleared, I will reboot");
     oled.drawMultilineString("Credentials cleared", "I will reboot", 30000);
     ESP.restart();
   }
