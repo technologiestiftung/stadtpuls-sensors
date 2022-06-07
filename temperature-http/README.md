@@ -62,14 +62,14 @@ pip install platformio
 brew install platformio
 ```
 
-## Usage
+## Usage & Development
 
 ```bash
 # install all needed libraries
 pio pkg install
 # build the binary locally
 pio run
-# upload all the files in the data folder to the SPIFFS
+# upload all the files in the ./data folder to the SPIFFS
 pio run --target uploadfs
 # upload the binary to the board
 pio run --target upload
@@ -77,12 +77,9 @@ pio run --target upload
 pio device monitor -b 115200
 ```
 
-## Development
-
-````plain
 ## Wiring
 
-```plain
+```txt
 //                                             HELTEC WIFI Kit 32
 //
 //                                      +-----------------------------+
@@ -98,9 +95,9 @@ pio device monitor -b 115200
 // |               |                    |                             |
 // |         SDA  -+- ---------------- -+-   SDA (23)                -+
 // |               |                    |                             |
-// |          A0  -+-                   |                            -+
-// |               |                    |                             |
-// |          A1  -+-                   |                             |
+// |          A0  -+-                   |       to forget WiFi   39  -+
+// |               |                    |       credentials connect   |
+// |          A1  -+-                   |       pin 39 to VCC         |
 // |               |                    |                             |
 // |          A2  -+-                   |                             |
 // |               |                    |                             |
@@ -114,11 +111,9 @@ pio device monitor -b 115200
 //                                      |                             |
 //                                      |                             |
 //                                      +-----------------------------+
-````
+```
 
 ![](./docs/wiring-temp_bb.png)
-
-```
 
 ## Contributors
 
@@ -129,9 +124,9 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- markdownlint-disable -->
 <table>
   <tr>
-    <td align="center"><a href="https://fabianmoronzirfas.me/"><img src="https://avatars.githubusercontent.com/u/315106?v=4?s=64" width="64px;" alt=""/><br /><sub><b>Fabian Morón Zirfas</b></sub></a><br /><a href="https://github.com/technologiestiftung/template-default/commits?author=ff6347" title="Documentation">📖</a></td>
-    <td align="center"><a href="http://vogelino.com"><img src="https://avatars.githubusercontent.com/u/2759340?v=4?s=64" width="64px;" alt=""/><br /><sub><b>Lucas Vogel</b></sub></a><br /><a href="https://github.com/technologiestiftung/template-default/commits?author=vogelino" title="Documentation">📖</a> <a href="#ideas-vogelino" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/technologiestiftung/template-default/pulls?q=is%3Apr+reviewed-by%3Avogelino" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/technologiestiftung/template-default/commits?author=vogelino" title="Code">💻</a></td>
-    <td align="center"><a href="http://www.awsm.de"><img src="https://avatars.githubusercontent.com/u/434355?v=4?s=64" width="64px;" alt=""/><br /><sub><b>Ingo Hinterding</b></sub></a><br /><a href="https://github.com/technologiestiftung/template-default/commits?author=Esshahn" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://fabianmoronzirfas.me/"><img src="https://avatars.githubusercontent.com/u/315106?v=4?s=64" width="64px;" alt=""/><br /><sub><b>Fabian Morón Zirfas</b></sub></a><br /><a href="https://github.com/technologiestiftung/stadtpuls-sensors/commits?author=ff6347" title="Documentation">📖</a> <a href="#ideas-ff6347" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/technologiestiftung/stadtpuls-sensors/pulls?q=is%3Apr+reviewed-by%3Aff6347" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/technologiestiftung/stadtpuls-sensors/commits?author=ff6347" title="Code">💻</a></td>
+    <td align="center"><a href="http://vogelino.com"><img src="https://avatars.githubusercontent.com/u/2759340?v=4?s=64" width="64px;" alt=""/><br /><sub><b>Lucas Vogel</b></sub></a><br /><a href="https://github.com/technologiestiftung/stadtpuls-sensors/commits?author=vogelino" title="Documentation">📖</a> <a href="#ideas-vogelino" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/technologiestiftung/stadtpuls-sensors/pulls?q=is%3Apr+reviewed-by%3Avogelino" title="Reviewed Pull Requests">👀</a> <a href="https://github.com/technologiestiftung/stadtpuls-sensors/commits?author=vogelino" title="Code">💻</a></td>
+    <td align="center"><a href="http://www.awsm.de"><img src="https://avatars.githubusercontent.com/u/434355?v=4?s=64" width="64px;" alt=""/><br /><sub><b>Ingo Hinterding</b></sub></a><br /><a href="https://github.com/technologiestiftung/stadtpuls-sensors/commits?author=Esshahn" title="Documentation">📖</a></td>
   </tr>
 </table>
 
@@ -145,7 +140,6 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 ## Content Licencing
 
 Texts and content available as [CC BY](https://creativecommons.org/licenses/by/3.0/de/).
-
 
 ## Credits
 
@@ -175,5 +169,11 @@ Texts and content available as [CC BY](https://creativecommons.org/licenses/by/3
   </tr>
 </table>
 
-## Related Projects
-```
+## Related Links
+
+- Rui Santos - esp32 tutorials - https://RandomNerdTutorials.com/
+- Adafruit_MCP9808_Library - examples (temp sensor) - https://github.com/adafruit/Adafruit_MCP9808_Library
+- Adafruit_SSD1306_Library - examples (oled display) - https://github.com/adafruit/Adafruit_SSD1306
+- Adafruit_GFX_Library - examples (oled display) - https://github.com/adafruit/Adafruit-GFX-Library
+- espressif arduino-esp32 examples - https://github.com/espressif/arduino-esp32/
+- Heltec_ESP32 - examples (board) - https://github.com/HelTecAutomation/Heltec_ESP32/
