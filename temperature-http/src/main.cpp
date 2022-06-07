@@ -163,19 +163,24 @@ String processor(const String &var)
 //    ██║   ██║██║╚██╔╝██║██╔══╝
 //    ██║   ██║██║ ╚═╝ ██║███████╗
 //    ╚═╝   ╚═╝╚═╝     ╚═╝╚══════╝
-
+// measuring
 double measurements_sum = 0;
 int measurements_counter = 0;
 int measuring_period = 2000; // in ms
 
 int measuring_iteration = 0;
 unsigned long time_now = 0;
-// wifi things
+// wifi probing
 unsigned long previous_millis = 0;
 unsigned long interval = 30000;
+// http sending
+unsigned long http_previous_millis = 0;
+unsigned long http_interval = 60000;
 
-// misc unused
+// blink sonmething
 #define BUILD_IN_LED 25
+// for resetting/forgetting the wifi credentials
+// connect pin 39 to VCC
 #define FORGET_PIN 39
 
 // ███████╗███████╗████████╗██╗   ██╗██████╗
@@ -451,17 +456,24 @@ void loop()
       // Serial.println(" F");
       // tempsensor.shutdown_wake(true); // sleep the sensor
       oled.drawValue("Temperature:", c, 0);
+      measurements_sum += c;
 
       measuring_iteration += 1;
+      measurements_counter += 1;
+    }
 
-      // ██╗  ██╗████████╗████████╗██████╗
-      // ██║  ██║╚══██╔══╝╚══██╔══╝██╔══██╗
-      // ███████║   ██║      ██║   ██████╔╝
-      // ██╔══██║   ██║      ██║   ██╔═══╝
-      // ██║  ██║   ██║      ██║   ██║
-      // ╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝
+    // ██╗  ██╗████████╗████████╗██████╗
+    // ██║  ██║╚══██╔══╝╚══██╔══╝██╔══██╗
+    // ███████║   ██║      ██║   ██████╔╝
+    // ██╔══██║   ██║      ██║   ██╔═══╝
+    // ██║  ██║   ██║      ██║   ██║
+    // ╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝
+    unsigned long http_current_millis = millis();
+    if ((WiFi.status() == WL_CONNECTED) && (http_current_millis - http_previous_millis >= http_interval))
+    {
 
-      String payload = "{\"measurements\": [" + String(c) + "], \"sensor_name\": \"" + sensor_name + "\"}";
+      String payload = "{\"measurements\": [" + String(measurements_sum / measurements_counter) + "], \"sensor_name\": \"" + sensor_name + "\"}";
+
       WiFiClientSecure client;
 
       // client.setCACert(root_ca);// if you want to be save
@@ -484,7 +496,8 @@ void loop()
         client.println("Connection: close");
         client.println();
         client.println(payload);
-
+        measurements_sum = 0;
+        measurements_counter = 0;
         while (client.connected())
         {
           String line = client.readStringUntil('\n');
@@ -506,6 +519,7 @@ void loop()
         oled.drawStringWithoutClear("Sent data!", oled.margin, oled.margin + 20, 250);
         client.stop();
       }
+      http_previous_millis = http_current_millis;
     }
   }
 }
