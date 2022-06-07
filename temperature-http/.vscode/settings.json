@@ -35,6 +35,9 @@
     "string_view": "cpp",
     "unordered_map": "cpp",
     "vector": "cpp",
-    "iterator": "cpp"
+    "iterator": "cpp",
+    "deque": "cpp",
+    "regex": "cpp",
+    "stdexcept": "cpp"
   }
 }

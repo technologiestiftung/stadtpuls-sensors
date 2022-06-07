@@ -28,10 +28,14 @@
 #include <Wire.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include "SPIFFS.h"
 #include <Adafruit_GFX.h>
 #include "Adafruit_SSD1306.h"
 #include "grfx.h"
 #include "Adafruit_MCP9808.h"
+#include <Preferences.h>
 #include "env.h"
 #include "util/sensors/env_cloak.h"
 // #include "scripts/sensors/env_ares.h"
@@ -102,9 +106,55 @@ Adafruit_MCP9808 tempsensor;
 //  ╚══╝╚══╝ ╚═╝╚═╝     ╚═╝
 
 // Replace with your network credentials
-const char *ssid = secret_ssid; // imported from env.h
-const char *password = secret_password;
+String ssid; // = secret_ssid;             // imported from env.h
+String password;
+//= "foo"; // secret_password;
+bool setup_access_point = false;
+const char *ap_ssid = sensor_name;
+const char *user_ssid = "esp32";
+const char *user_password = "123456789";
+const char *PARAM_SSID = "ssid";
+const char *PARAM_PASSWORD = "password";
+AsyncWebServer ap_server(80);
+Preferences preferences;
+void notFound(AsyncWebServerRequest *request)
+{
+  request->send(404, "text/plain", "Not found");
+}
+/**
+ * @brief function to handle replacement in html templates
+ *
+ * @param var the string to replace
+ * @return String the result of the replacement
+ */
+String processor(const String &var)
+{
 
+  preferences.begin("credentials", false);
+
+  String new_ssid = preferences.getString("ssid", "");
+  String new_password = preferences.getString("password", "");
+
+  Serial.println(var);
+  if (var == "STATE")
+  {
+    return "OK";
+  }
+  if (var == "SSID")
+  {
+    return new_ssid;
+  }
+  if (var == "PASSWORD")
+  {
+    return new_password;
+  }
+  if (var == "BOARD_NAME")
+  {
+    return sensor_name;
+  }
+  preferences.end();
+  return String();
+}
 //--------------
 
 // ████████╗██╗███╗   ███╗███████╗
@@ -113,18 +163,24 @@ const char *password = secret_password;
 //    ██║   ██║██║╚██╔╝██║██╔══╝
 //    ██║   ██║██║ ╚═╝ ██║███████╗
 //    ╚═╝   ╚═╝╚═╝     ╚═╝╚══════╝
-
+// measuring
 double measurements_sum = 0;
 int measurements_counter = 0;
 int measuring_period = 2000; // in ms
+
 int measuring_iteration = 0;
 unsigned long time_now = 0;
-// wifi things
+// wifi probing
 unsigned long previous_millis = 0;
 unsigned long interval = 30000;
+// http sending
+unsigned long http_previous_millis = 0;
+unsigned long http_interval = 60000;
 
-// misc unused
+// blink sonmething
 #define BUILD_IN_LED 25
+// for resetting/forgetting the wifi credentials
+// connect pin 39 to VCC
 #define FORGET_PIN 39
 
 // ███████╗███████╗████████╗██╗   ██╗██████╗
@@ -138,7 +194,7 @@ void setup()
 {
 
   pinMode(BUILD_IN_LED, OUTPUT);
-  pinMode(FORGET_PIN, INPUT_PULLUP);
+  pinMode(FORGET_PIN, INPUT);
 
   // ███████╗███████╗██████╗ ██╗ █████╗ ██╗
   // ██╔════╝██╔════╝██╔══██╗██║██╔══██╗██║
@@ -219,22 +275,123 @@ void setup()
   // ██║███╗██║██║██╔══╝  ██║
   // ╚███╔███╔╝██║██║     ██║
   //  ╚══╝╚══╝ ╚═╝╚═╝     ╚═╝
+  oled.drawString("Connecting to WiFi", 0);
+  preferences.begin("credentials", false);
+  if (ssid == "" || password == "")
+  {
+    ssid = preferences.getString("ssid", "");
+    password = preferences.getString("password", "");
+  }
+  else
+  {
+    preferences.putString("ssid", ssid);
+    preferences.putString("password", password);
+  }
 
+  int no_wifi_count = 0;
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+  WiFi.begin(ssid.c_str(), password.c_str());
   Serial.print("Connecting to WiFi ..");
-
+  // int count = 0;
+  String dots = ".";
   while (WiFi.status() != WL_CONNECTED)
   {
     Serial.print('.');
+    oled.drawStringWithoutClear((char *)dots.c_str(), oled.margin, oled.margin + 10, 0);
+    dots = dots + ".";
     delay(1000);
+    no_wifi_count++;
+    if (no_wifi_count == 20)
+    {
+      setup_access_point = true;
+      break;
+    }
   }
-  Serial.println();
-  Serial.println(WiFi.localIP());
+  //  █████╗ ██████╗
+  // ██╔══██╗██╔══██╗
+  // ███████║██████╔╝
+  // ██╔══██║██╔═══╝
+  // ██║  ██║██║
+  // ╚═╝  ╚═╝╚═╝
 
-  digitalWrite(BUILD_IN_LED, HIGH);
+  if (setup_access_point)
+  {
+    // Initialize SPIFFS
+    if (!SPIFFS.begin(true))
+    {
+      Serial.println("An Error has occurred while mounting SPIFFS");
+      return;
+    }
+    oled.drawString("could not find WiFi", 500);
+    Serial.print("setting up access point");
+    oled.drawMultilineString("Creating access point", (char *)ap_ssid, 1000);
+    WiFi.softAP(ap_ssid);
+    WiFi.mode(WIFI_AP);
+    IPAddress IP = WiFi.softAPIP();
+    Serial.print("AP IP address: ");
+    Serial.println(IP);
+    String ip = "http://" + IP.toString();
+    char *cstr = new char[ip.length() + 1];
+    strcpy(cstr, ip.c_str());
+    oled.drawMultilineString("(open) Access point:", (char *)ap_ssid, 0);
+    oled.drawStringWithoutClear("GoTo:", oled.margin, oled.margin + 20, 0);
+    oled.drawStringWithoutClear(cstr, oled.margin, oled.margin + 30, 0);
 
-  oled.drawMultilineString("Connected to WiFi", strdup(ssid), 500);
+    // Route to load style.css file
+    ap_server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request)
+                 { request->send(SPIFFS, "/style.css", "text/css"); });
+
+    ap_server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+                 { request->send(SPIFFS, "/index.html", String(), false, processor); });
+    // Send a POST request to <IP>/post
+    // with a form field ssid and password set to <ssid> and <password>
+    ap_server.on("/post", HTTP_POST, [](AsyncWebServerRequest *request)
+                 {
+      String user_ssid;
+      String user_password;
+      if (request->hasParam(PARAM_SSID, true))
+      {
+        user_ssid = request->getParam(PARAM_SSID, true)->value();
+      }
+      else
+      {
+        user_ssid = "No ssid sent";
+      }
+      if (request->hasParam(PARAM_PASSWORD, true))
+      {
+        user_password = request->getParam(PARAM_PASSWORD, true)->value();
+      }
+      else
+      {
+        user_password = "No password sent";
+      }
+
+      preferences.begin("credentials", false);
+      preferences.putString("ssid", user_ssid);
+      preferences.putString("password", user_password);
+      Serial.println("ssid: " + user_ssid);
+      Serial.println("password: " + user_password);
+      Serial.println("Please Restart the device");
+
+      request->send(SPIFFS, "/post.html", String(), false, processor); });
+    // request->send(200, "text/plain", "SSID: " + user_ssid + " PASSWORD: " + user_password); });
+    // set password in prefs
+    oled.drawMultilineString("Saving credentials", "Please reboot", 30000);
+    ESP.restart();
+
+    ap_server.onNotFound(notFound);
+
+    ap_server.begin();
+  }
+  else
+  {
+    Serial.println();
+    Serial.println(WiFi.localIP());
+
+    digitalWrite(BUILD_IN_LED, HIGH);
+
+    oled.drawMultilineString("Connected to WiFi", (char *)ssid.c_str(), 500);
+  }
 }
 
 // ██╗      ██████╗  ██████╗ ██████╗
@@ -246,51 +403,64 @@ void setup()
 
 void loop()
 {
-
-  // ██╗    ██╗██╗███████╗██╗
-  // ██║    ██║██║██╔════╝██║
-  // ██║ █╗ ██║██║█████╗  ██║
-  // ██║███╗██║██║██╔══╝  ██║
-  // ╚███╔███╔╝██║██║     ██║
-  //  ╚══╝╚══╝ ╚═╝╚═╝     ╚═╝
-
-  unsigned long current_millis = millis();
-  // if WiFi is down, try reconnecting
-  if ((WiFi.status() != WL_CONNECTED) && (current_millis - previous_millis >= interval))
+  if (digitalRead(FORGET_PIN) == HIGH)
   {
-    oled.drawString("Reconnecting WiFi", 0);
-    Serial.print(millis());
-    Serial.println("Reconnecting to WiFi...");
-
-    WiFi.disconnect();
-    WiFi.reconnect();
-    previous_millis = current_millis;
+    preferences.begin("credentials", false);
+    preferences.clear();
+    preferences.end();
+    oled.drawMultilineString("Credentials cleared", "I will reboot", 30000);
+    ESP.restart();
   }
-
-  // ████████╗███████╗███╗   ███╗██████╗
-  // ╚══██╔══╝██╔════╝████╗ ████║██╔══██╗
-  //    ██║   █████╗  ██╔████╔██║██████╔╝
-  //    ██║   ██╔══╝  ██║╚██╔╝██║██╔═══╝
-  //    ██║   ███████╗██║ ╚═╝ ██║██║
-  //    ╚═╝   ╚══════╝╚═╝     ╚═╝╚═╝
-
-  if (millis() >= measuring_iteration * measuring_period)
+  if (!setup_access_point)
   {
-    // Read and print out the temperature, then convert to *F
-    // tempsensor.shutdown_wake(false); // wakey wakey!
 
-    // Serial.println("Sampling data");
-    float c = tempsensor.readTempC();
-    // float f = c * 9.0 / 5.0 + 32;
-    Serial.print("Temp: ");
-    Serial.print(c);
-    Serial.println(" C");
-    // Serial.print(f);
-    // Serial.println(" F");
-    // tempsensor.shutdown_wake(true); // sleep the sensor
-    oled.drawValue("Temperature:", c, 0);
+    // ██╗    ██╗██╗███████╗██╗
+    // ██║    ██║██║██╔════╝██║
+    // ██║ █╗ ██║██║█████╗  ██║
+    // ██║███╗██║██║██╔══╝  ██║
+    // ╚███╔███╔╝██║██║     ██║
+    //  ╚══╝╚══╝ ╚═╝╚═╝     ╚═╝
 
-    measuring_iteration += 1;
+    unsigned long current_millis = millis();
+    // if WiFi is down, try reconnecting
+    if ((WiFi.status() != WL_CONNECTED) && (current_millis - previous_millis >= interval))
+    {
+      oled.drawString("Reconnecting WiFi", 0);
+      Serial.print(millis());
+      Serial.println("Reconnecting to WiFi...");
+
+      WiFi.disconnect();
+      WiFi.reconnect();
+      previous_millis = current_millis;
+    }
+
+    // ████████╗███████╗███╗   ███╗██████╗
+    // ╚══██╔══╝██╔════╝████╗ ████║██╔══██╗
+    //    ██║   █████╗  ██╔████╔██║██████╔╝
+    //    ██║   ██╔══╝  ██║╚██╔╝██║██╔═══╝
+    //    ██║   ███████╗██║ ╚═╝ ██║██║
+    //    ╚═╝   ╚══════╝╚═╝     ╚═╝╚═╝
+
+    if (millis() >= measuring_iteration * measuring_period)
+    {
+      // Read and print out the temperature, then convert to *F
+      // tempsensor.shutdown_wake(false); // wakey wakey!
+
+      // Serial.println("Sampling data");
+      float c = tempsensor.readTempC();
+      // float f = c * 9.0 / 5.0 + 32;
+      Serial.print("Temp: ");
+      Serial.print(c);
+      Serial.println(" C");
+      // Serial.print(f);
+      // Serial.println(" F");
+      // tempsensor.shutdown_wake(true); // sleep the sensor
+      oled.drawValue("Temperature:", c, 0);
+      measurements_sum += c;
+
+      measuring_iteration += 1;
+      measurements_counter += 1;
+    }
 
     // ██╗  ██╗████████╗████████╗██████╗
     // ██║  ██║╚══██╔══╝╚══██╔══╝██╔══██╗
@@ -298,51 +468,58 @@ void loop()
     // ██╔══██║   ██║      ██║   ██╔═══╝
     // ██║  ██║   ██║      ██║   ██║
     // ╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝
-
-    String payload = "{\"measurements\": [" + String(c) + "], \"sensor_name\": \"" + sensor_name + "\"}";
-    WiFiClientSecure client;
-
-    // client.setCACert(root_ca);// if you want to be save
-    client.setInsecure(); // skip verification
-
-    if (!client.connect(server, 443))
+    unsigned long http_current_millis = millis();
+    if ((WiFi.status() == WL_CONNECTED) && (http_current_millis - http_previous_millis >= http_interval))
     {
-      Serial.println("Connection failed!");
-    }
-    else
-    {
-      Serial.println("Connected to server!");
-      Serial.println("\n- - - - - - - - - - - - - - - -");
-      // Make a HTTP request:
-      client.println("POST " + String(path) + " HTTP/1.0");
-      client.println("Host: " + String(server));
-      client.println("Content-Type: application/json");
-      client.println("Content-Length: " + String(payload.length()));
-      client.println("Authorization: Bearer " + String(auth_token));
-      client.println("Connection: close");
-      client.println();
-      client.println(payload);
 
-      while (client.connected())
+      String payload = "{\"measurements\": [" + String(measurements_sum / measurements_counter) + "], \"sensor_name\": \"" + sensor_name + "\"}";
+
+      WiFiClientSecure client;
+
+      // client.setCACert(root_ca);// if you want to be save
+      client.setInsecure(); // skip verification
+
+      if (!client.connect(server, 443))
       {
-        String line = client.readStringUntil('\n');
-        if (line == "\r")
+        Serial.println("Connection failed!");
+      }
+      else
+      {
+        Serial.println("Connected to server!");
+        Serial.println("\n- - - - - - - - - - - - - - - -");
+        // Make a HTTP request:
+        client.println("POST " + String(path) + " HTTP/1.0");
+        client.println("Host: " + String(server));
+        client.println("Content-Type: application/json");
+        client.println("Content-Length: " + String(payload.length()));
+        client.println("Authorization: Bearer " + String(auth_token));
+        client.println("Connection: close");
+        client.println();
+        client.println(payload);
+        measurements_sum = 0;
+        measurements_counter = 0;
+        while (client.connected())
         {
-          Serial.println("POST Success!");
-          break;
+          String line = client.readStringUntil('\n');
+          if (line == "\r")
+          {
+            Serial.println("POST Success!");
+            break;
+          }
         }
-      }
-      // if there are incoming bytes available
-      // from the server, read them and print them:
-      while (client.available())
-      {
-        char c = client.read();
-        Serial.write(c);
-      }
+        // if there are incoming bytes available
+        // from the server, read them and print them:
+        while (client.available())
+        {
+          char c = client.read();
+          Serial.write(c);
+        }
 
-      Serial.println("\n- - - - - - - - - - - - - - - -");
-      oled.drawStringWithoutClear("Sent data!", oled.margin, oled.margin + 20, 250);
-      client.stop();
+        Serial.println("\n- - - - - - - - - - - - - - - -");
+        oled.drawStringWithoutClear("Sent data!", oled.margin, oled.margin + 20, 250);
+        client.stop();
+      }
+      http_previous_millis = http_current_millis;
     }
   }
 }
