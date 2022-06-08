@@ -332,6 +332,39 @@ void setup()
   oled.splash(2000);
   oled.drawMultilineString("Hi, I'm", sensor_name, 1000);
 
+  // ████████╗███████╗███╗   ███╗██████╗
+  // ╚══██╔══╝██╔════╝████╗ ████║██╔══██╗
+  //    ██║   █████╗  ██╔████╔██║██████╔╝
+  //    ██║   ██╔══╝  ██║╚██╔╝██║██╔═══╝
+  //    ██║   ███████╗██║ ╚═╝ ██║██║
+  //    ╚═╝   ╚══════╝╚═╝     ╚═╝╚═╝
+
+  // ███████╗███████╗███╗   ██╗███████╗ ██████╗ ██████╗
+  // ██╔════╝██╔════╝████╗  ██║██╔════╝██╔═══██╗██╔══██╗
+  // ███████╗█████╗  ██╔██╗ ██║███████╗██║   ██║██████╔╝
+  // ╚════██║██╔══╝  ██║╚██╗██║╚════██║██║   ██║██╔══██╗
+  // ███████║███████╗██║ ╚████║███████║╚██████╔╝██║  ██║
+  // ╚══════╝╚══════╝╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝
+
+  bool status = tempsensor.begin(0x18, &I2C_MCP);
+
+  if (!status)
+  {
+    Serial.println("Couldn't find MCP9808!");
+    oled.drawString("Cant find temp sensor", 0);
+
+    while (1)
+      ;
+  }
+  Serial.println("Found MCP9808!");
+  oled.drawString("Found temp sensor!", 500);
+  tempsensor.setResolution(3); // sets the resolution mode of reading, the modes are defined in the table bellow:
+  // Mode Resolution SampleTime
+  //  0    0.5°C       30 ms
+  //  1    0.25°C      65 ms
+  //  2    0.125°C     130 ms
+  //  3    0.0625°C    250 ms
+
   // ██╗    ██╗██╗███████╗██╗
   // ██║    ██║██║██╔════╝██║
   // ██║ █╗ ██║██║█████╗  ██║
@@ -462,38 +495,6 @@ void setup()
 
     oled.drawMultilineString("Connected to WiFi", (char *)ssid.c_str(), 500);
   }
-  // ████████╗███████╗███╗   ███╗██████╗
-  // ╚══██╔══╝██╔════╝████╗ ████║██╔══██╗
-  //    ██║   █████╗  ██╔████╔██║██████╔╝
-  //    ██║   ██╔══╝  ██║╚██╔╝██║██╔═══╝
-  //    ██║   ███████╗██║ ╚═╝ ██║██║
-  //    ╚═╝   ╚══════╝╚═╝     ╚═╝╚═╝
-
-  // ███████╗███████╗███╗   ██╗███████╗ ██████╗ ██████╗
-  // ██╔════╝██╔════╝████╗  ██║██╔════╝██╔═══██╗██╔══██╗
-  // ███████╗█████╗  ██╔██╗ ██║███████╗██║   ██║██████╔╝
-  // ╚════██║██╔══╝  ██║╚██╗██║╚════██║██║   ██║██╔══██╗
-  // ███████║███████╗██║ ╚████║███████║╚██████╔╝██║  ██║
-  // ╚══════╝╚══════╝╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝
-
-  bool status = tempsensor.begin(0x18, &I2C_MCP);
-
-  if (!status)
-  {
-    Serial.println("Couldn't find MCP9808!");
-    oled.drawString("Cant find temp sensor", 0);
-
-    while (1)
-      ;
-  }
-  Serial.println("Found MCP9808!");
-  oled.drawString("Found temp sensor!", 500);
-  tempsensor.setResolution(3); // sets the resolution mode of reading, the modes are defined in the table bellow:
-  // Mode Resolution SampleTime
-  //  0    0.5°C       30 ms
-  //  1    0.25°C      65 ms
-  //  2    0.125°C     130 ms
-  //  3    0.0625°C    250 ms
 }
 
 // ██╗      ██████╗  ██████╗ ██████╗
