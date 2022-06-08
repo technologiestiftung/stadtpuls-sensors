@@ -156,6 +156,99 @@ String processor(const String &var)
   preferences.end();
   return String();
 }
+
+void WiFiEvent(WiFiEvent_t event)
+{
+  Serial.println();
+  Serial.printf("[WiFi-event] event: %d\n", event);
+  switch (event)
+  {
+  case SYSTEM_EVENT_WIFI_READY:
+    Serial.println("WiFi interface ready");
+    break;
+  case SYSTEM_EVENT_SCAN_DONE:
+    Serial.println("Completed scan for access points");
+    break;
+  case SYSTEM_EVENT_STA_START:
+    Serial.println("WiFi client started");
+    break;
+  case SYSTEM_EVENT_STA_STOP:
+    Serial.println("WiFi clients stopped");
+    break;
+  case SYSTEM_EVENT_STA_CONNECTED:
+    Serial.println("Connected to access point");
+    break;
+  case SYSTEM_EVENT_STA_DISCONNECTED:
+    Serial.println("Disconnected from WiFi access point");
+    break;
+  case SYSTEM_EVENT_STA_AUTHMODE_CHANGE:
+    Serial.println("Authentication mode of access point has changed");
+    break;
+  case SYSTEM_EVENT_STA_GOT_IP:
+    Serial.print("Obtained IP address: ");
+    Serial.println(WiFi.localIP());
+    break;
+  case SYSTEM_EVENT_STA_LOST_IP:
+    Serial.println("Lost IP address and IP address is reset to 0");
+    break;
+  // case SYSTEM_EVENT_WPS_ER_SUCCESS:
+  //   Serial.println("WiFi Protected Setup (WPS): succeeded in enrollee mode");
+  //   break;
+  // case SYSTEM_EVENT_WPS_ER_FAILED:
+  //   Serial.println("WiFi Protected Setup (WPS): failed in enrollee mode");
+  //   break;
+  // case SYSTEM_EVENT_WPS_ER_TIMEOUT:
+  //   Serial.println("WiFi Protected Setup (WPS): timeout in enrollee mode");
+  //   break;
+  // case SYSTEM_EVENT_WPS_ER_PIN:
+  //   Serial.println("WiFi Protected Setup (WPS): pin code in enrollee mode");
+  //   break;
+  case SYSTEM_EVENT_AP_START:
+    Serial.println("WiFi access point started");
+    break;
+  case SYSTEM_EVENT_AP_STOP:
+    Serial.println("WiFi access point  stopped");
+    break;
+  case SYSTEM_EVENT_AP_STACONNECTED:
+    Serial.println("Client connected");
+    break;
+  case SYSTEM_EVENT_AP_STADISCONNECTED:
+    Serial.println("Client disconnected");
+    break;
+  case SYSTEM_EVENT_AP_STAIPASSIGNED:
+    Serial.println("Assigned IP address to client");
+    break;
+  case SYSTEM_EVENT_AP_PROBEREQRECVED:
+    Serial.println("Received probe request");
+    break;
+  case SYSTEM_EVENT_GOT_IP6:
+    Serial.println("AP IPv6 is preferred");
+    break;
+  // case SYSTEM_EVENT_STA_GOT_IP6:
+  //   Serial.println("STA IPv6 is preferred");
+  //   break;
+  // case SYSTEM_EVENT_ETH_GOT_IP6:
+  //   Serial.println("Ethernet IPv6 is preferred");
+  //   break;
+  case SYSTEM_EVENT_ETH_START:
+    Serial.println("Ethernet started");
+    break;
+  case SYSTEM_EVENT_ETH_STOP:
+    Serial.println("Ethernet stopped");
+    break;
+  case SYSTEM_EVENT_ETH_CONNECTED:
+    Serial.println("Ethernet connected");
+    break;
+  case SYSTEM_EVENT_ETH_DISCONNECTED:
+    Serial.println("Ethernet disconnected");
+    break;
+  case SYSTEM_EVENT_ETH_GOT_IP:
+    Serial.println("Obtained IP address");
+    break;
+  default:
+    break;
+  }
+}
 //--------------
 
 // ████████╗██╗███╗   ███╗███████╗
@@ -239,39 +332,6 @@ void setup()
   oled.splash(2000);
   oled.drawMultilineString("Hi, I'm", sensor_name, 1000);
 
-  // ████████╗███████╗███╗   ███╗██████╗
-  // ╚══██╔══╝██╔════╝████╗ ████║██╔══██╗
-  //    ██║   █████╗  ██╔████╔██║██████╔╝
-  //    ██║   ██╔══╝  ██║╚██╔╝██║██╔═══╝
-  //    ██║   ███████╗██║ ╚═╝ ██║██║
-  //    ╚═╝   ╚══════╝╚═╝     ╚═╝╚═╝
-
-  // ███████╗███████╗███╗   ██╗███████╗ ██████╗ ██████╗
-  // ██╔════╝██╔════╝████╗  ██║██╔════╝██╔═══██╗██╔══██╗
-  // ███████╗█████╗  ██╔██╗ ██║███████╗██║   ██║██████╔╝
-  // ╚════██║██╔══╝  ██║╚██╗██║╚════██║██║   ██║██╔══██╗
-  // ███████║███████╗██║ ╚████║███████║╚██████╔╝██║  ██║
-  // ╚══════╝╚══════╝╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝
-
-  bool status = tempsensor.begin(0x18, &I2C_MCP);
-
-  if (!status)
-  {
-    Serial.println("Couldn't find MCP9808!");
-    oled.drawString("Cant find temp sensor", 0);
-
-    while (1)
-      ;
-  }
-  Serial.println("Found MCP9808!");
-  oled.drawString("Found temp sensor!", 500);
-  tempsensor.setResolution(3); // sets the resolution mode of reading, the modes are defined in the table bellow:
-  // Mode Resolution SampleTime
-  //  0    0.5°C       30 ms
-  //  1    0.25°C      65 ms
-  //  2    0.125°C     130 ms
-  //  3    0.0625°C    250 ms
-
   // ██╗    ██╗██╗███████╗██╗
   // ██║    ██║██║██╔════╝██║
   // ██║ █╗ ██║██║█████╗  ██║
@@ -279,6 +339,7 @@ void setup()
   // ╚███╔███╔╝██║██║     ██║
   //  ╚══╝╚══╝ ╚═╝╚═╝     ╚═╝
   oled.drawString("Connecting to WiFi", 0);
+  WiFi.onEvent(WiFiEvent);
   preferences.begin("credentials", false);
   if (ssid == "" || password == "")
   {
@@ -293,7 +354,14 @@ void setup()
 
   int no_wifi_count = 0;
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid.c_str(), password.c_str());
+  if (password == "")
+  {
+    WiFi.begin(ssid.c_str());
+  }
+  else
+  {
+    WiFi.begin(ssid.c_str(), password.c_str());
+  }
   Serial.print("Connecting to WiFi ..");
   // int count = 0;
   String dots = ".";
@@ -304,7 +372,7 @@ void setup()
     dots = dots + ".";
     delay(1000);
     no_wifi_count++;
-    if (no_wifi_count == 20)
+    if (no_wifi_count == 30)
     {
       setup_access_point = true;
       break;
@@ -326,7 +394,7 @@ void setup()
       return;
     }
     oled.drawString("could not find WiFi", 500);
-    Serial.print("setting up access point");
+    Serial.println("setting up access point");
     oled.drawMultilineString("Creating access point", (char *)ap_ssid, 1000);
     WiFi.softAP(ap_ssid);
     WiFi.mode(WIFI_AP);
@@ -366,7 +434,7 @@ void setup()
       }
       else
       {
-        user_password = "No password sent";
+        user_password = "";
       }
 
       preferences.begin("credentials", false);
@@ -394,6 +462,38 @@ void setup()
 
     oled.drawMultilineString("Connected to WiFi", (char *)ssid.c_str(), 500);
   }
+  // ████████╗███████╗███╗   ███╗██████╗
+  // ╚══██╔══╝██╔════╝████╗ ████║██╔══██╗
+  //    ██║   █████╗  ██╔████╔██║██████╔╝
+  //    ██║   ██╔══╝  ██║╚██╔╝██║██╔═══╝
+  //    ██║   ███████╗██║ ╚═╝ ██║██║
+  //    ╚═╝   ╚══════╝╚═╝     ╚═╝╚═╝
+
+  // ███████╗███████╗███╗   ██╗███████╗ ██████╗ ██████╗
+  // ██╔════╝██╔════╝████╗  ██║██╔════╝██╔═══██╗██╔══██╗
+  // ███████╗█████╗  ██╔██╗ ██║███████╗██║   ██║██████╔╝
+  // ╚════██║██╔══╝  ██║╚██╗██║╚════██║██║   ██║██╔══██╗
+  // ███████║███████╗██║ ╚████║███████║╚██████╔╝██║  ██║
+  // ╚══════╝╚══════╝╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝
+
+  bool status = tempsensor.begin(0x18, &I2C_MCP);
+
+  if (!status)
+  {
+    Serial.println("Couldn't find MCP9808!");
+    oled.drawString("Cant find temp sensor", 0);
+
+    while (1)
+      ;
+  }
+  Serial.println("Found MCP9808!");
+  oled.drawString("Found temp sensor!", 500);
+  tempsensor.setResolution(3); // sets the resolution mode of reading, the modes are defined in the table bellow:
+  // Mode Resolution SampleTime
+  //  0    0.5°C       30 ms
+  //  1    0.25°C      65 ms
+  //  2    0.125°C     130 ms
+  //  3    0.0625°C    250 ms
 }
 
 // ██╗      ██████╗  ██████╗ ██████╗
