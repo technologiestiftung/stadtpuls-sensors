@@ -1,6 +1,6 @@
 const char *secret_ssid = "";
 const char *secret_password = "";
-const char *server = "example.com";
+const char *server = "api.stadtpuls.com";
 const char *auth_token = ""; // get it from stadtpuls.com
 
 // if you want can can include a root ca for your server in here
