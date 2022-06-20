@@ -1,1 +1,0 @@
-Use this sketch to calculate the linear regression coefficient
