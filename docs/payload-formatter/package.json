@@ -1,0 +1,15 @@
+{
+  "name": "payload-formatter",
+  "version": "0.1.0",
+  "description": "",
+  "main": "simple-formatter-one-value.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "ff6347 <hash@ff6347.email>",
+  "license": "MIT",
+  "devDependencies": {
+    "prettier": "2.7.1"
+  }
+}
