@@ -274,8 +274,8 @@ unsigned long http_interval = 60000;
 // blink sonmething
 #define BUILD_IN_LED 25
 // for resetting/forgetting the wifi credentials
-// connect pin 39 to VCC
-#define FORGET_PIN 39
+// connect pin 33 to VCC
+#define FORGET_PIN 33
 
 // ███████╗███████╗████████╗██╗   ██╗██████╗
 // ██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗
@@ -288,7 +288,7 @@ void setup()
 {
 
   pinMode(BUILD_IN_LED, OUTPUT);
-  pinMode(FORGET_PIN, INPUT);
+  pinMode(FORGET_PIN, INPUT_PULLDOWN);
 
   // ███████╗███████╗██████╗ ██╗ █████╗ ██╗
   // ██╔════╝██╔════╝██╔══██╗██║██╔══██╗██║

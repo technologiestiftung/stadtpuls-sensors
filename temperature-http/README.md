@@ -2,7 +2,7 @@
 
 # Temperature over HTTP(s)
 
-As seen on [republica 2022 in the makerspace](https://re-publica.com/en/node/359)
+As seen on [re:publica 2022 in the maker-space](https://re-publica.com/en/node/359)
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 
@@ -14,7 +14,7 @@ As seen on [republica 2022 in the makerspace](https://re-publica.com/en/node/359
 
 How to:
 
-- You dont need to use every section. Only the ones that apply to your project.
+- You don't need to use every section. Only the ones that apply to your project.
 - Adjust the files on .github/ISSUE_TEMPLATE/* how you need them
 - Adjust the file on .github/CODEOWNERS to match your team
 - If you use staging and main branches use this template for .github/renovate.json
@@ -39,7 +39,7 @@ Use all-contributors
 npx all-contributors-cli check
 npx all-contributors-cli add ff6347 doc
 
-You can use it on GitHub just by commeting on PRs and issues:
+You can use it on GitHub just by commenting on PRs and issues:
 
 ```
 @all-contributors please add @ff6347 for infrastructure, tests and code
@@ -95,9 +95,9 @@ pio device monitor -b 115200
 // |               |                    |                             |
 // |         SDA  -+- ---------------- -+-   SDA (23)                -+
 // |               |                    |                             |
-// |          A0  -+-                   |       to forget WiFi   39  -+
+// |          A0  -+-                   |       to forget WiFi   33  -+
 // |               |                    |       credentials connect   |
-// |          A1  -+-                   |       pin 39 to VCC         |
+// |          A1  -+-                   |       pin 33 to VCC         |
 // |               |                    |                             |
 // |          A2  -+-                   |                             |
 // |               |                    |                             |
@@ -113,7 +113,7 @@ pio device monitor -b 115200
 //                                      +-----------------------------+
 ```
 
-![](./docs/wiring-temp_bb.png)
+![](./docs/wiring-temp-step-by-step_bb-8.png)
 
 ## Contributors
 
@@ -139,7 +139,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
 
-## Content Licencing
+## Content Licensing
 
 Texts and content available as [CC BY](https://creativecommons.org/licenses/by/3.0/de/).
 
