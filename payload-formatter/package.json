@@ -10,6 +10,6 @@
   "author": "ff6347 <hash@ff6347.email>",
   "license": "MIT",
   "devDependencies": {
-    "prettier": "2.6.2"
+    "prettier": "2.7.1"
   }
 }
