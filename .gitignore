@@ -2,3 +2,6 @@ temperatur-lora/.vscode/c_cpp_properties.json
 temperatur-lora/.vscode/launch.json
 env.h
 node_modules
+stadtpuls-sensors.code-workspace
+temperature-http/.vscode/c_cpp_properties.json
+temperature-http/.vscode/launch.json
