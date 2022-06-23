@@ -5,3 +5,5 @@ node_modules
 stadtpuls-sensors.code-workspace
 temperature-http/.vscode/c_cpp_properties.json
 temperature-http/.vscode/launch.json
+hello-world/hello-wfi-lora-32-v2/.vscode/c_cpp_properties.json
+hello-world/hello-wfi-lora-32-v2/.vscode/launch.json
