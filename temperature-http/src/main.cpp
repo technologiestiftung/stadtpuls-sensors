@@ -630,13 +630,13 @@ void loop()
         switch (mode)
         {
         case AP_MODE:
-          Serial.println("AP Mode");
+          Serial.println("AP/WIFI Mode");
           break;
         case SENSOR_MODE:
           Serial.println("SENSOR Mode");
           break;
         case HTTP_MODE:
-          Serial.println("HTTP Mode");
+          Serial.println("STADTPULS Mode");
           break;
         }
       }
@@ -687,7 +687,7 @@ void loop()
       // Serial.print(current_temperature);
       // Serial.println(" C");
       oled.drawSensorMessageHttp(
-          "HTTP MODE",
+          "STADTPULS MODE",
           "Temperature",
           current_temperature,
           0,
