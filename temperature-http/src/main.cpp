@@ -25,6 +25,7 @@
 //   copies or substantial portions of the Software.
 
 #include <Arduino.h>
+#include <string> // std::string, std::to_string
 #include <Wire.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
@@ -58,6 +59,50 @@
 // #include "util/sensors/env_storm.h"
 // #include "util/sensors/env_tigra.h"
 // #include "util/sensors/env_wasp.h"
+
+// to make sure you are sending data to api.stadtpuls.com you need the following root certificate
+// to get this via your browser do the folowing
+// - open the api url of your sensor in Firefox e.g. https://api.stadtpuls.com/api/v1/sensors/<sensor_id>/records
+// - click on the little lock icon left from the URL in the address bar
+// - click on the "connection secure" button
+// - click on the "More information" button
+// - click on the "View certificate" button
+// - go to the second tab where you can see infos about the root ca
+// - scroll down and downlad the PEM (cert)
+// - save the PEM to a file called root-ca.pem
+// - open the file in your editor and copy the content to the clipboard
+// - insert it into your editor and adjust it like the cert below.
+// Hint!: the new line characters are important for the cert to work correctly
+
+const char *root_ca =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIEmDCCA4CgAwIBAgIQAtiaFXPzs7jaFFtYOJgpBzANBgkqhkiG9w0BAQsFADBa\n"
+    "MQswCQYDVQQGEwJJRTESMBAGA1UEChMJQmFsdGltb3JlMRMwEQYDVQQLEwpDeWJl\n"
+    "clRydXN0MSIwIAYDVQQDExlCYWx0aW1vcmUgQ3liZXJUcnVzdCBSb290MB4XDTIw\n"
+    "MDEyNzEyNDYzOVoXDTI0MTIzMTIzNTk1OVowSjELMAkGA1UEBhMCVVMxGTAXBgNV\n"
+    "BAoTEENsb3VkZmxhcmUsIEluYy4xIDAeBgNVBAMTF0Nsb3VkZmxhcmUgSW5jIFJT\n"
+    "QSBDQS0yMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtV0myAmrsTNd\n"
+    "DLKWBcIxA05+X4cCxm+AJO3arhy+552A98XPVAFmOCjo5mm7nfiBMWpW9ejBpehZ\n"
+    "6LPgOgFhCCiwfs2g/c43AMPpqY0LyXjKpmBGgK90BS1P2ugJUsibWjLPISFHj1wa\n"
+    "iqoXwBhwsQHx3t8thamV7FtXOTm+hcLv17YsSj/R1rMhopdPJSxCI33XsxnWEmmF\n"
+    "AAKv1aoS2Ghkf+OtGJ1SL8Xl9JGv5QnZi0bnzzIVIvA3xP2L5uIdFsw6SNeBYYK/\n"
+    "PXLZcF7sCmkk4jxI4/7T5VHUK8ASoU+TcJm/t9KDbmktyM2iYhhMQzdfFjp2k1r6\n"
+    "bmldmsWIwQIDAQABo4IBaDCCAWQwHQYDVR0OBBYEFBipGvyyRUnBbzA0CCvZh5yw\n"
+    "JVd6MB8GA1UdIwQYMBaAFOWdWTCCR1jMrPoIVDaGezq1BE3wMA4GA1UdDwEB/wQE\n"
+    "AwIBhjAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwEgYDVR0TAQH/BAgw\n"
+    "BgEB/wIBADA0BggrBgEFBQcBAQQoMCYwJAYIKwYBBQUHMAGGGGh0dHA6Ly9vY3Nw\n"
+    "LmRpZ2ljZXJ0LmNvbTA6BgNVHR8EMzAxMC+gLaArhilodHRwOi8vY3JsMy5kaWdp\n"
+    "Y2VydC5jb20vT21uaXJvb3QyMDI1LmNybDBtBgNVHSAEZjBkMDcGCWCGSAGG/WwB\n"
+    "ATAqMCgGCCsGAQUFBwIBFhxodHRwczovL3d3dy5kaWdpY2VydC5jb20vQ1BTMAsG\n"
+    "CWCGSAGG/WwBAjAIBgZngQwBAgEwCAYGZ4EMAQICMAgGBmeBDAECAzANBgkqhkiG\n"
+    "9w0BAQsFAAOCAQEAfLCdjh6mZHIQ4WHd83Q9UKca58JOFwwVJisXj0HnkPCw8/LS\n"
+    "51CA0gfGqX+6k+u+wcGG+E+EvAV85nIv6bbGdmnd8mpHa5NUGKQNgAM1J92Kn8iE\n"
+    "l9O04NqmBfDnz+admJTSy9oid9hJC6hVjonU0s7Q6NrgQv0dzn6WhMqnw5Ennym8\n"
+    "/+0uNP1GKu9OVnzo3CKX7VMJW7p74PJPpVmVQc2zci5cb3pKFUMrIsvUPyB88/p8\n"
+    "2x4PSnNx6dXdRraeHRMegHGZ3/VQfjOB0jV1JF6PmFqokkX0tNiIprFkBun7+WVI\n"
+    "9pbDH55GEgF+WjBTXTQcFeIS8vGLlfCU+K3jkw==\n"
+    "-----END CERTIFICATE-----\n";
+const char *server = "api.stadtpuls.com";
 
 //  ██████╗ ██╗     ███████╗██████╗
 // ██╔═══██╗██║     ██╔════╝██╔══██╗
@@ -98,6 +143,7 @@ TwoWire I2C_OLED = TwoWire(1);
 
 // Create the MCP9808 temperature sensor object
 Adafruit_MCP9808 tempsensor;
+float current_temperature = 0.0f;
 
 // ██╗    ██╗██╗███████╗██╗
 // ██║    ██║██║██╔════╝██║
@@ -107,9 +153,10 @@ Adafruit_MCP9808 tempsensor;
 //  ╚══╝╚══╝ ╚═╝╚═╝     ╚═╝
 
 // Replace with your network credentials
-String ssid; // = secret_ssid;             // imported from env.h
+String ssid;
 String password;
-//= "foo"; // secret_password;
+String ap_ip;
+
 bool setup_access_point = false;
 const char *ap_ssid = sensor_name;
 const char *user_ssid = "esp32";
@@ -117,7 +164,11 @@ const char *user_password = "123456789";
 const char *PARAM_SSID = "ssid";
 const char *PARAM_PASSWORD = "password";
 AsyncWebServer ap_server(80);
+int wifi_setup_retries = 20;
 Preferences preferences;
+const char prefs_credentials_key[] = "credentials";
+const char prefs_mode_key[] = "operation_mode";
+
 void notFound(AsyncWebServerRequest *request)
 {
   request->send(404, "text/plain", "Not found");
@@ -131,7 +182,7 @@ void notFound(AsyncWebServerRequest *request)
 String processor(const String &var)
 {
 
-  preferences.begin("credentials", false);
+  preferences.begin(prefs_credentials_key, false);
 
   String new_ssid = preferences.getString("ssid", "");
   String new_password = preferences.getString("password", "");
@@ -259,10 +310,10 @@ void WiFiEvent(WiFiEvent_t event)
 //    ╚═╝   ╚═╝╚═╝     ╚═╝╚══════╝
 // measuring
 double measurements_sum = 0;
-int measurements_counter = 0;
+long measurements_counter = 0;
 int measuring_period = 2000; // in ms
 
-int measuring_iteration = 0;
+long measuring_iteration = 0;
 unsigned long time_now = 0;
 // wifi probing
 unsigned long previous_millis = 0;
@@ -277,6 +328,28 @@ unsigned long http_interval = 60000;
 // connect pin 33 to VCC
 #define FORGET_PIN 33
 
+// useing the button for mode switches
+
+#define PRO_BUTTON_PIN 0
+// Variables will change:
+int button_state;            // the current reading from the input pin
+int last_button_state = LOW; // the previous reading from the input pin
+
+// the following variables are unsigned longs because the time, measured in
+// milliseconds, will quickly become a bigger number than can be stored in an int.
+unsigned long last_debounce_time = 0; // the last time the output pin was toggled
+unsigned long debounce_delay = 50;    // the debounce time; increase if the output flickers
+#define SENSOR_MODE 0
+#define HTTP_MODE 1
+#define AP_MODE 2
+int mode = 0; // 0  for sensor mode, 1 for http mode, 2 for AP mode
+
+// some states we need to keep track of
+
+bool oled_active = false;
+bool wifi_active = false;
+bool tempsensor_active = false;
+
 // ███████╗███████╗████████╗██╗   ██╗██████╗
 // ██╔════╝██╔════╝╚══██╔══╝██║   ██║██╔══██╗
 // ███████╗█████╗     ██║   ██║   ██║██████╔╝
@@ -289,6 +362,11 @@ void setup()
 
   pinMode(BUILD_IN_LED, OUTPUT);
   pinMode(FORGET_PIN, INPUT_PULLDOWN);
+  pinMode(PRO_BUTTON_PIN, INPUT);
+
+  preferences.begin(prefs_mode_key, false);
+  mode = preferences.getInt("mode", 0);
+  preferences.end();
 
   // ███████╗███████╗██████╗ ██╗ █████╗ ██╗
   // ██╔════╝██╔════╝██╔══██╗██║██╔══██╗██║
@@ -324,13 +402,15 @@ void setup()
   if (!display_status)
   {
     Serial.println("Could not find OLED display");
-    while (1)
-      ;
   }
-  oled.init(&display);
+  else
+  {
+    oled_active = true;
+  }
+  oled.init(&display, &oled_active);
   Serial.println("Found OLED display");
   oled.splash(2000);
-  oled.drawMultilineString("Hi, I'm", sensor_name, 1000);
+  oled.drawMultilineStringBig("Hi, I'm", sensor_name, 1500);
 
   // ████████╗███████╗███╗   ███╗██████╗
   // ╚══██╔══╝██╔════╝████╗ ████║██╔══██╗
@@ -346,24 +426,26 @@ void setup()
   // ███████║███████╗██║ ╚████║███████║╚██████╔╝██║  ██║
   // ╚══════╝╚══════╝╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝
 
-  bool status = tempsensor.begin(0x18, &I2C_MCP);
+  bool temp_status = tempsensor.begin(0x18, &I2C_MCP);
 
-  if (!status)
+  if (!temp_status)
   {
     Serial.println("Couldn't find MCP9808!");
     oled.drawString("Cant find temp sensor", 0);
-
-    while (1)
-      ;
   }
-  Serial.println("Found MCP9808!");
-  oled.drawString("Found temp sensor!", 500);
-  tempsensor.setResolution(3); // sets the resolution mode of reading, the modes are defined in the table bellow:
-  // Mode Resolution SampleTime
-  //  0    0.5°C       30 ms
-  //  1    0.25°C      65 ms
-  //  2    0.125°C     130 ms
-  //  3    0.0625°C    250 ms
+  else
+  { //
+    tempsensor_active = true;
+    Serial.println("Found MCP9808!");
+    oled.drawString("Found temp sensor!", 500);
+    tempsensor.setResolution(3); // sets the resolution mode of reading, the modes are defined in the table bellow:
+    // Mode Resolution SampleTime
+    //  0    0.5°C       30 ms
+    //  1    0.25°C      65 ms
+    //  2    0.125°C     130 ms
+    //  3    0.0625°C    250 ms
+    current_temperature = tempsensor.readTempC();
+  }
 
   // ██╗    ██╗██╗███████╗██╗
   // ██║    ██║██║██╔════╝██║
@@ -371,9 +453,9 @@ void setup()
   // ██║███╗██║██║██╔══╝  ██║
   // ╚███╔███╔╝██║██║     ██║
   //  ╚══╝╚══╝ ╚═╝╚═╝     ╚═╝
-  oled.drawString("Connecting to WiFi", 0);
+  // oled.drawString("Connecting to WiFi", 0);
   WiFi.onEvent(WiFiEvent);
-  preferences.begin("credentials", false);
+  preferences.begin(prefs_credentials_key, false);
   if (ssid == "" || password == "")
   {
     ssid = preferences.getString("ssid", "");
@@ -384,6 +466,7 @@ void setup()
     preferences.putString("ssid", ssid);
     preferences.putString("password", password);
   }
+  preferences.end();
 
   int no_wifi_count = 0;
   WiFi.mode(WIFI_STA);
@@ -396,20 +479,36 @@ void setup()
     WiFi.begin(ssid.c_str(), password.c_str());
   }
   Serial.print("Connecting to WiFi ..");
-  // int count = 0;
-  String dots = ".";
+
+  // String dots = ".";
   while (WiFi.status() != WL_CONNECTED)
   {
-    Serial.print('.');
-    oled.drawStringWithoutClear((char *)dots.c_str(), oled.margin, oled.margin + 10, 0);
-    dots = dots + ".";
+    float mapped = map(no_wifi_count, 0, wifi_setup_retries, 0, DISPLAY_WIDTH);
+    oled.drawWiFiProgress("Connecting to WiFi", (char *)ssid.c_str(), 0, DISPLAY_HEIGHT - 5, mapped, 5, 0),
+        Serial.print('.');
+    // oled.drawStringWithoutClear((char *)dots.c_str(), oled.margin, oled.margin + 10, 0);
+    // dots = dots + ".";
     delay(1000);
     no_wifi_count++;
-    if (no_wifi_count == 30)
+    if (no_wifi_count == wifi_setup_retries)
     {
-      setup_access_point = true;
-      break;
+      if (WiFi.status() != WL_CONNECTED)
+      {
+        wifi_active = false;
+        setup_access_point = true;
+        mode = AP_MODE;
+        break;
+      }
     }
+  }
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    wifi_active = true;
+    Serial.println("Connected!");
+    Serial.println(WiFi.localIP());
+
+    oled.drawStringWithoutClear("Connected!", oled.margin, oled.margin + 20, 500);
+    // oled.drawMultilineString("Connected to WiFi", (char *)ssid.c_str(), 500);
   }
   //  █████╗ ██████╗
   // ██╔══██╗██╔══██╗
@@ -418,7 +517,7 @@ void setup()
   // ██║  ██║██║
   // ╚═╝  ╚═╝╚═╝
 
-  if (setup_access_point)
+  if (wifi_active == false)
   {
     // Initialize SPIFFS
     if (!SPIFFS.begin(true))
@@ -426,17 +525,18 @@ void setup()
       Serial.println("An Error has occurred while mounting SPIFFS");
       return;
     }
-    oled.drawString("could not find WiFi", 500);
-    Serial.println("setting up access point");
+    oled.drawString("Could not find or connect to a WiFi", 500);
+    Serial.println("Creating access point");
     oled.drawMultilineString("Creating access point", (char *)ap_ssid, 1000);
     WiFi.softAP(ap_ssid);
     WiFi.mode(WIFI_AP);
     IPAddress IP = WiFi.softAPIP();
     Serial.print("AP IP address: ");
     Serial.println(IP);
-    String ip = "http://" + IP.toString();
-    char *cstr = new char[ip.length() + 1];
-    strcpy(cstr, ip.c_str());
+
+    ap_ip = "http://" + IP.toString();
+    char *cstr = new char[ap_ip.length() + 1];
+    strcpy(cstr, ap_ip.c_str());
     oled.drawMultilineString("(open) Access point:", (char *)ap_ssid, 0);
     oled.drawStringWithoutClear("GoTo:", oled.margin, oled.margin + 20, 0);
     oled.drawStringWithoutClear(cstr, oled.margin, oled.margin + 30, 0);
@@ -470,9 +570,10 @@ void setup()
         user_password = "";
       }
 
-      preferences.begin("credentials", false);
+      preferences.begin(prefs_credentials_key, false);
       preferences.putString("ssid", user_ssid);
       preferences.putString("password", user_password);
+      preferences.end();
       Serial.println("ssid: " + user_ssid);
       Serial.println("password: " + user_password);
       Serial.println("Please Restart the device");
@@ -486,15 +587,6 @@ void setup()
 
     ap_server.begin();
   }
-  else
-  {
-    Serial.println();
-    Serial.println(WiFi.localIP());
-
-    digitalWrite(BUILD_IN_LED, HIGH);
-
-    oled.drawMultilineString("Connected to WiFi", (char *)ssid.c_str(), 500);
-  }
 }
 
 // ██╗      ██████╗  ██████╗ ██████╗
@@ -506,82 +598,120 @@ void setup()
 
 void loop()
 {
-  if (digitalRead(FORGET_PIN) == HIGH)
+  int button_reading = digitalRead(PRO_BUTTON_PIN);
+  // check to see if you just pressed the button
+  // (i.e. the input went from LOW to HIGH), and you've waited long enough
+  // since the last press to ignore any noise:
+
+  // If the switch changed, due to noise or pressing:
+  if (button_reading != last_button_state)
   {
-    preferences.begin("credentials", false);
-    preferences.clear();
-    preferences.end();
-    Serial.println("Credentials cleared, I will reboot");
-    oled.drawMultilineString("Credentials cleared", "I will reboot", 30000);
-    ESP.restart();
+    // reset the debouncing timer
+    last_debounce_time = millis();
   }
-  if (!setup_access_point)
+
+  if ((millis() - last_debounce_time) > debounce_delay)
   {
+    // whatever the reading is at, it's been there for longer than the debounce
+    // delay, so take it as the actual current state:
 
-    // ██╗    ██╗██╗███████╗██╗
-    // ██║    ██║██║██╔════╝██║
-    // ██║ █╗ ██║██║█████╗  ██║
-    // ██║███╗██║██║██╔══╝  ██║
-    // ╚███╔███╔╝██║██║     ██║
-    //  ╚══╝╚══╝ ╚═╝╚═╝     ╚═╝
-
-    unsigned long current_millis = millis();
-    // if WiFi is down, try reconnecting
-    if ((WiFi.status() != WL_CONNECTED) && (current_millis - previous_millis >= interval))
+    // if the button state has changed:
+    if (button_reading != button_state)
     {
-      oled.drawString("Reconnecting WiFi", 0);
-      Serial.print(millis());
-      Serial.println("Reconnecting to WiFi...");
+      button_state = button_reading;
 
-      WiFi.disconnect();
-      WiFi.reconnect();
-      previous_millis = current_millis;
+      // only toggle the LED if the new button state is HIGH
+      if (button_state == LOW)
+      {
+        mode = (mode + 1) % 3;
+        preferences.begin(prefs_mode_key, false);
+        preferences.putInt("mode", mode);
+        preferences.end();
+        switch (mode)
+        {
+        case AP_MODE:
+          Serial.println("AP/WIFI Mode");
+          break;
+        case SENSOR_MODE:
+          Serial.println("SENSOR Mode");
+          break;
+        case HTTP_MODE:
+          Serial.println("STADTPULS Mode");
+          break;
+        }
+      }
     }
+  }
+  last_button_state = button_reading;
+  // save the reading. Next time through the loop, it'll be the lastButtonState:
 
-    // ████████╗███████╗███╗   ███╗██████╗
-    // ╚══██╔══╝██╔════╝████╗ ████║██╔══██╗
-    //    ██║   █████╗  ██╔████╔██║██████╔╝
-    //    ██║   ██╔══╝  ██║╚██╔╝██║██╔═══╝
-    //    ██║   ███████╗██║ ╚═╝ ██║██║
-    //    ╚═╝   ╚══════╝╚═╝     ╚═╝╚═╝
-
-    if (millis() >= measuring_iteration * measuring_period)
+  switch (mode)
+  {
+  case AP_MODE:
+    if (wifi_active == false)
     {
-      // Read and print out the temperature, then convert to *F
-      // tempsensor.shutdown_wake(false); // wakey wakey!
-
-      // Serial.println("Sampling data");
-      float c = tempsensor.readTempC();
-      // float f = c * 9.0 / 5.0 + 32;
-      Serial.print("Temp: ");
-      Serial.print(c);
-      Serial.println(" C");
-      // Serial.print(f);
-      // Serial.println(" F");
-      // tempsensor.shutdown_wake(true); // sleep the sensor
-      oled.drawValue("Temperature:", c, 0);
-      measurements_sum += c;
-
-      measuring_iteration += 1;
-      measurements_counter += 1;
+      String apmsg = "WiFi: " + (String)sensor_name;
+      oled.drawAPMessage("ACCESS POINT MODE",
+                         (char *)apmsg.c_str(),
+                         (char *)ap_ip.c_str(), 0);
     }
+    else
+    {
+      String ssidmsg = "WiFi: " + ssid;
+      String ipmsg = "IP: " + WiFi.localIP().toString();
+      oled.drawWiFiMessage("WIFI MODE",
+                           (char *)ssidmsg.c_str(),
+                           (char *)ipmsg.c_str(), 0);
+    }
+    break;
+  case SENSOR_MODE:
 
-    // ██╗  ██╗████████╗████████╗██████╗
-    // ██║  ██║╚══██╔══╝╚══██╔══╝██╔══██╗
-    // ███████║   ██║      ██║   ██████╔╝
-    // ██╔══██║   ██║      ██║   ██╔═══╝
-    // ██║  ██║   ██║      ██║   ██║
-    // ╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝
+    if (tempsensor_active)
+    {
+      // Serial.print("Temp: ");
+      // Serial.print(current_temperature);
+      // Serial.println(" C");
+      // oled.drawValue("Temperature:", current_temperature, 0);
+      oled.drawSensorMessage("SENSOR MODE", "Temperature", current_temperature, 0);
+    }
+    break;
+  case HTTP_MODE:
     unsigned long http_current_millis = millis();
-    if ((WiFi.status() == WL_CONNECTED) && (http_current_millis - http_previous_millis >= http_interval))
+    // float step = http_interval / DISPLAY_WIDTH;
+    unsigned long progress = http_current_millis - http_previous_millis;
+    // map one value into another range
+    float mapped = map(progress, 0, http_interval, 0, DISPLAY_WIDTH);
+    if (tempsensor_active)
     {
+      // Serial.print("Temp: ");
+      // Serial.print(current_temperature);
+      // Serial.println(" C");
+      oled.drawSensorMessageHttp(
+          "STADTPULS MODE",
+          "Temperature",
+          current_temperature,
+          0,
+          DISPLAY_HEIGHT - 5,
+          mapped,
+          5,
+          0);
+    }
+
+    if (setup_access_point == false && WiFi.status() == WL_CONNECTED && (http_current_millis - http_previous_millis >= http_interval))
+    {
+      //   // ██╗  ██╗████████╗████████╗██████╗
+      //   // ██║  ██║╚══██╔══╝╚══██╔══╝██╔══██╗
+      //   // ███████║   ██║      ██║   ██████╔╝
+      //   // ██╔══██║   ██║      ██║   ██╔═══╝
+      //   // ██║  ██║   ██║      ██║   ██║
+      //   // ╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝
 
       String payload = "{\"measurements\": [" + String(measurements_sum / measurements_counter) + "], \"sensor_name\": \"" + sensor_name + "\"}";
 
       WiFiClientSecure client;
 
-      // client.setCACert(root_ca);// if you want to be save
-      client.setInsecure(); // skip verification
+      client.setCACert(root_ca);
+      // client.setInsecure(); // skip verification
 
       if (!client.connect(server, 443))
       {
@@ -620,10 +750,68 @@ void loop()
         }
 
         Serial.println("\n- - - - - - - - - - - - - - - -");
-        oled.drawStringWithoutClear("Sent data!", oled.margin, oled.margin + 20, 250);
+        oled.drawStringWithoutClear("Sent data!", oled.margin, oled.margin + 47, 250);
         client.stop();
       }
       http_previous_millis = http_current_millis;
+    }
+    break;
+  }
+
+  if (digitalRead(FORGET_PIN) == HIGH)
+  {
+    preferences.begin(prefs_credentials_key, false);
+    preferences.clear();
+    preferences.end();
+    Serial.println("Credentials cleared, I will reboot");
+    oled.drawMultilineString("Credentials cleared", "I will reboot", 30000);
+    ESP.restart();
+  }
+  if (setup_access_point == false)
+  {
+
+    // check every 30 seconds if we are still connected
+    // if not try to reconnect
+
+    unsigned long current_millis = millis();
+    // if WiFi is down, try reconnecting
+    if ((WiFi.status() != WL_CONNECTED) && (current_millis - previous_millis >= interval))
+    {
+      oled.drawString("Reconnecting WiFi", 0);
+      Serial.print(millis());
+      Serial.println("Reconnecting to WiFi...");
+
+      WiFi.disconnect();
+      WiFi.reconnect();
+      previous_millis = current_millis;
+    }
+  }
+
+  if (tempsensor_active)
+  {
+
+    //   // ████████╗███████╗███╗   ███╗██████╗
+    //   // ╚══██╔══╝██╔════╝████╗ ████║██╔══██╗
+    //   //    ██║   █████╗  ██╔████╔██║██████╔╝
+    //   //    ██║   ██╔══╝  ██║╚██╔╝██║██╔═══╝
+    //   //    ██║   ███████╗██║ ╚═╝ ██║██║
+    //   //    ╚═╝   ╚══════╝╚═╝     ╚═╝╚═╝
+    if (millis() >= measuring_iteration * measuring_period)
+    {
+      // Read and print out the temperature, then convert to *F
+      // tempsensor.shutdown_wake(false); // wakey wakey!
+
+      // Serial.println("Sampling data");
+      current_temperature = tempsensor.readTempC();
+      // float f = c * 9.0 / 5.0 + 32;
+      // Serial.print(f);
+      // Serial.println(" F");
+      // tempsensor.shutdown_wake(true); // sleep the sensor
+      // oled.drawValue("Temperature:", current_temperature, 0);
+      measurements_sum += current_temperature;
+
+      measuring_iteration += 1;
+      measurements_counter += 1;
     }
   }
 }
