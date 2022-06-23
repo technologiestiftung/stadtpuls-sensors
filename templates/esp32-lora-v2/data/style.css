@@ -1,0 +1,100 @@
+/* based on https://codepen.io/tutsplus/pen/oLwYRJ */
+* {
+  font-family: monospace;
+  font-size: 12;
+  box-sizing: border-box;
+}
+body {
+  font: normal 18px/1.5 monospace;
+  margin: 0 auto;
+  max-width: 50em;
+  padding: 4em 1em;
+  background: #F2F3F8;
+  color: #100C53;
+}
+ul, li, h1 {
+  padding: 0;
+  margin: 0;
+}
+.container {
+  width: 80%;
+  max-width: 1200px;
+  background: #F9FCFD;
+  box-sizing: border-box;
+}
+
+.logo {
+  margin-left: 32px;
+  margin-top: 32px;
+}
+.flex-outer {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.flex-outer  > h1 {
+  margin: 0;
+  padding: 32px 32px 8px;
+}
+
+.flex-outer  > p {
+  margin: 0;
+  padding: 0 32px 32px;
+}
+
+.flex-outer > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 4px 32px;
+  border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.flex-outer > li:last-child {
+  padding-top: 32px;
+  padding-bottom: 32px;
+}
+
+.flex-outer li label,
+.flex-outer li p {
+  padding: 8px;
+  font-weight: 300;
+  letter-spacing: 0.09em;
+  /* text-transform: uppercase; */
+}
+.flex-outer li label {
+  text-transform: uppercase;
+}
+
+.flex-outer > li > label,
+.flex-outer li p {
+  flex: 1 0 120px;
+  max-width: 220px;
+}
+
+.flex-outer > li > label + * {
+  flex: 1 0 220px;
+}
+
+.flex-outer li p {
+  margin: 0;
+}
+
+.flex-outer li input:not([type="checkbox"]),
+.flex-outer li button {
+  margin-left: auto;
+  padding: 8px 16px;
+  border: none;
+  /* text-transform: uppercase; */
+  letter-spacing: 0.09em;
+  border-radius: 2px;
+}
+
+.flex-outer li button {
+  background: #100C53;
+  color: #F9FCFD;
+}
+
+input {
+  background-color: #F2F3F8;
+}
