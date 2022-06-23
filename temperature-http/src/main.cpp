@@ -710,8 +710,8 @@ void loop()
 
       WiFiClientSecure client;
 
-      // client.setCACert(root_ca);// if you want to be save
-      client.setInsecure(); // skip verification
+      client.setCACert(root_ca);
+      // client.setInsecure(); // skip verification
 
       if (!client.connect(server, 443))
       {
