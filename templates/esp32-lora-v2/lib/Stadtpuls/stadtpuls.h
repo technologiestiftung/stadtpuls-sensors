@@ -1,3 +1,8 @@
+// Copyright (c) 2022 Technologiestiftung Berlin & Fabian Morón Zirfas
+//
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #ifndef STADTPULS_H
 #define STADTPULS_H
 

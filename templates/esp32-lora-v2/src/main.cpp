@@ -1,3 +1,8 @@
+// Copyright (c) 2022 Technologiestiftung Berlin & Fabian Morón Zirfas
+//
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #include <Arduino.h>
 #include "stadtpuls.h"
 
@@ -8,7 +13,7 @@ unsigned long interval = 60000; // 60 seconds
 
 bool done_once = false;
 void setup()
-{ //
+{
   options.debug = true;
   options.sensor_name = "Stadtpuls";
   // options.use_display = true;

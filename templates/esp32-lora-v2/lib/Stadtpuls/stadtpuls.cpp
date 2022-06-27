@@ -1,3 +1,8 @@
+// Copyright (c) 2022 Technologiestiftung Berlin & Fabian Morón Zirfas
+//
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #include "stadtpuls.h"
 const char *PARAM_SSID = "ssid";
 const char *PARAM_PASSWORD = "password";

@@ -1,3 +1,8 @@
+// Copyright (c) 2022 Technologiestiftung Berlin & Fabian Morón Zirfas
+//
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #include "stadtpuls_util.h"
 void stadtpuls_WiFiEvent(WiFiEvent_t event)
 {
