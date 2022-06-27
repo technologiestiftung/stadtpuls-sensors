@@ -18,5 +18,14 @@
     "titleBar.inactiveBackground": "#289c6d99",
     "titleBar.inactiveForeground": "#e7e7e799"
   },
-  "peacock.color": "#289c6d"
+  "peacock.color": "#289c6d",
+  "files.associations": {
+    "*.fish": "fish",
+    ".skhdrc": "shellscript",
+    "*.conf": "nginx",
+    "*.html": "html",
+    "*.mdx": "markdown",
+    "*.sql": "sql",
+    "sstream": "cpp"
+  }
 }

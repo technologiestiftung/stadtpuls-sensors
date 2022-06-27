@@ -20,14 +20,29 @@
 #define STADTPULS_I2C_OLED_SDA_PIN 4
 #define STADTPULS_I2C_OLED_SCL_PIN 15
 #define STADTPULS_FORGET_PIN 33
+#define STADTOPULS_FORGET_DELAY_MS 5000
 #define STADTPULS_PRO_BUTTON_PIN 0 // useing the button for mode switches
-#define STADTPULS_WIFI_SETUP_RETRIES 20
+#define STADTPULS_WIFI_SETUP_RETRIES 5
 
+struct Stadtpuls_Options
+{
+  bool debug;
+  String sensor_name;
+  String ssid;
+  String password;
+  String sensor_id;
+  String auth_token;
+  int forget_pin;
+  bool use_display;
+};
 class Stadtpuls
 {
 public:
   Stadtpuls();
-  void begin(String sensor_name, bool debug);
+
+  void begin(Stadtpuls_Options options);
+  void listen();
+  void send(std::vector<double> measurements);
 
 private:
   const char *root_ca =
@@ -58,19 +73,28 @@ private:
       "2x4PSnNx6dXdRraeHRMegHGZ3/VQfjOB0jV1JF6PmFqokkX0tNiIprFkBun7+WVI\n"
       "9pbDH55GEgF+WjBTXTQcFeIS8vGLlfCU+K3jkw==\n"
       "-----END CERTIFICATE-----\n";
-  const char *server_host = "api.stadtpuls.com";
+  const char *server = "api.stadtpuls.com";
   Adafruit_SSD1306 display;
   String ssid = "";
   String password = "";
+  String auth_token = "";
+  String sensor_id = "";
   String ap_ip;
-  String sensor_name = "STADTPULS_ESP32";
+  int forget_pin;
+  static String sensor_name;
   Preferences preferences;
   const char *prefs_credentials_key = "puls_wifi_creds";
   const char *prefs_mode_key = "puls_curr_mode";
+  const char *prefs_sensor_id_key = "sensor_id";
+  const char *prefs_sensor_name_key = "sensor_name";
+  const char *prefs_auth_token_key = "auth_token";
+  const char *prefs_password_key = "password";
+  const char *prefs_ssid_key = "ssid";
   bool wifi_active = false;
   bool setup_access_point = true;
   bool PRINT;
+  static String processor(const String &var);
 };
 
-String processor(const String &var);
+// String processor(const String &var);
 #endif
