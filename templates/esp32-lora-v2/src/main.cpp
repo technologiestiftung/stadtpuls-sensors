@@ -21,6 +21,7 @@ void setup()
   // options.password = "Stadtpuls";
   // options.sensor_id = "0";
   // options.auth_token = "Stadtpuls";
+  options.server = "stadtpuls-esp32.eu.ngrok.io";
   // options.forget_pin = STADTPULS_FORGET_PIN; //currently 33
 
   Serial.begin(115200);

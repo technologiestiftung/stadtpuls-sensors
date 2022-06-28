@@ -27,7 +27,7 @@ void Stadtpuls::begin(Stadtpuls_Options options)
   //  defined( WIFI_Kit_32 ) || defined( WIFI_LoRa_32 )
 #warnings "This library is not tested with your board proceed at own risk"
 #endif
-  // optiions parsing
+  // options parsing
   if (options.sensor_name.length() > 0)
   {
     sensor_name = options.sensor_name;
@@ -55,6 +55,14 @@ void Stadtpuls::begin(Stadtpuls_Options options)
   else
   {
     forget_pin = STADTPULS_FORGET_PIN;
+  }
+  if (options.server.length() > 0)
+  {
+    server = options.server;
+  }
+  else
+  {
+    server = STADTPULS_SERVER;
   }
 
   if (options.debug == true)
@@ -268,7 +276,7 @@ void Stadtpuls::send(std::vector<double> measurements)
     }
 
     String payload = "{\"measurements\": [" + m + "], \"sensor_name\": \"" + sensor_name + "\"}";
-    if (!client.connect(server, 443))
+    if (!client.connect(server.c_str(), 443))
     {
       if (PRINT)
       {

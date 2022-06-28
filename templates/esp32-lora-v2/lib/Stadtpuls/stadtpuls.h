@@ -29,6 +29,8 @@
 #define STADTPULS_PRO_BUTTON_PIN 0 // useing the button for mode switches
 #define STADTPULS_WIFI_SETUP_RETRIES 5
 
+#define STADTPULS_SERVER "api.stadtpuls.com"
+
 struct Stadtpuls_Options
 {
   bool debug;
@@ -37,6 +39,7 @@ struct Stadtpuls_Options
   String password;
   String sensor_id;
   String auth_token;
+  String server;
   int forget_pin;
   bool use_display;
 };
@@ -78,7 +81,7 @@ private:
       "2x4PSnNx6dXdRraeHRMegHGZ3/VQfjOB0jV1JF6PmFqokkX0tNiIprFkBun7+WVI\n"
       "9pbDH55GEgF+WjBTXTQcFeIS8vGLlfCU+K3jkw==\n"
       "-----END CERTIFICATE-----\n";
-  const char *server = "api.stadtpuls.com";
+  String server = "api.stadtpuls.com";
   Adafruit_SSD1306 display;
   String ssid = "";
   String password = "";
