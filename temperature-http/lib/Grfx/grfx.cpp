@@ -212,3 +212,17 @@ void Grfx::drawSensorMessageHttp(char mode[],
   display->display(); // Display buffer
   delay(timeout);
 }
+
+void Grfx::drawErrorMessage(char mode[], char msg[], int timeout)
+{
+  display->clearDisplay();              // Clear display buffer
+  display->setTextSize(1);              // Set text size to 1
+  display->setTextColor(SSD1306_WHITE); // Set text color to white
+  display->setCursor(margin, margin);   // Set   // Set cursor to top left
+  display->println(F(mode));
+  display->setCursor(margin, margin + 10); // Set   // Set cursor to top left
+  display->println(F(msg));
+  display->setCursor(margin, margin + 20); // Set   // Set cursor to top left
+  display->display();                      // Display buffer
+  delay(timeout);
+}

@@ -27,5 +27,6 @@ public:
   void drawSensorMessage(char mode[], char msq[], double value, int timeout);
   void drawSensorMessageHttp(char mode[], char msg[], double value, int16_t x, int16_t y, int16_t w, int16_t h, int timeout);
   void drawWiFiProgress(char line1[], char line2[], int16_t x, int16_t y, int16_t w, int16_t h, int timeout);
+  void drawErrorMessage(char mode[], char msg[], int timeout);
 };
 #endif

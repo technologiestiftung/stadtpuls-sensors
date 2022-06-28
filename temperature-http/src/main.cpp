@@ -431,7 +431,7 @@ void setup()
   if (!temp_status)
   {
     Serial.println("Couldn't find MCP9808!");
-    oled.drawString("Cant find temp sensor", 0);
+    oled.drawString("Cant find temp sensor", 1000);
   }
   else
   { //
@@ -674,6 +674,10 @@ void loop()
       // oled.drawValue("Temperature:", current_temperature, 0);
       oled.drawSensorMessage("SENSOR MODE", "Temperature", current_temperature, 0);
     }
+    else
+    { //
+      oled.drawErrorMessage("SENSOR MODE", "Sensor not found :(", 0);
+    }
     break;
   case HTTP_MODE:
     unsigned long http_current_millis = millis();
@@ -695,6 +699,10 @@ void loop()
           mapped,
           5,
           0);
+    }
+    else
+    {
+      oled.drawErrorMessage("STADTPULS MODE", "Sensor not found :(", 0);
     }
 
     if (setup_access_point == false && WiFi.status() == WL_CONNECTED && (http_current_millis - http_previous_millis >= http_interval))
